@@ -36,6 +36,8 @@ jobs:
 
   test:
     runs-on: ubuntu-latest
+    env:
+      TEST_COUNT: ${{ github.ref_type == 'tag' && '5' || github.ref == 'refs/heads/main' && '3' || github.event_name == 'pull_request' && '3' || '1' }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -47,7 +49,4 @@ jobs:
           cache-dependency-path: go.sum
 
       - name: Run tests
-        run: |
-          COUNT=1
-          if [ "${{ github.ref }}" = "refs/heads/main" ]; then COUNT=5; fi
-          go test -v -race -count=$COUNT ./...
+        run: go test -v -race -count=${{ env.TEST_COUNT }} ./...
