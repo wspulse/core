@@ -23,6 +23,9 @@ golangci-lint run ./...
 
 # Format
 goimports -w .
+
+# Benchmarks
+go test -bench=. -benchmem -run=^$ ./...
 ```
 
 ## Conventions
@@ -43,6 +46,13 @@ goimports -w .
     2. `golangci-lint run ./...` — must pass with zero warnings
     3. `go test -race ./...` — must pass
 - **Tests**: co-located with source (`_test.go`). Cover happy path and at least one error path.
+  - **Test-first for bug fixes**: when a bug is discovered, write a failing test that reproduces it before touching production code. The PR must include this test.
+  - **Benchmarks**: changes to encoding or frame allocation must include a benchmark. Verify with `make bench`.
+- **API compatibility**:
+  - Exported symbols are a public contract. Changing or removing any exported identifier is a breaking change requiring a major version bump.
+  - Adding a method to an exported interface breaks all external implementations — treat it as a breaking change.
+  - Mark deprecated symbols with `// Deprecated: use Xxx instead.` before removal.
+- **Error format**: wrap errors as `fmt.Errorf("wspulse: <context>: %w", err)`; define sentinel errors as `errors.New("wspulse: <description>")`.
 
 ## Critical Rules
 
@@ -50,5 +60,6 @@ goimports -w .
 2. **Minimal changes** — one concern per edit; no drive-by refactors.
 3. **No hardcoded secrets** — all configuration via environment variables.
 4. **Zero external dependencies** — core must only depend on Go stdlib. Any change introducing an external dependency must be explicitly justified and approved.
-5. **Accuracy** — if you have questions or need clarification, ask the user. Do not make assumptions without confirming.
-6. **Language consistency** — when the user writes in Traditional Chinese, respond in Traditional Chinese; otherwise respond in English.
+5. **No breaking changes without version bump** — never rename, remove, or change the signature of an exported symbol without bumping the major version. When unsure, add alongside the old symbol and deprecate.
+6. **Accuracy** — if you have questions or need clarification, ask the user. Do not make assumptions without confirming.
+7. **Language consistency** — when the user writes in Traditional Chinese, respond in Traditional Chinese; otherwise respond in English.
