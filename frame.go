@@ -22,9 +22,9 @@ type Frame struct {
 	// If empty on Send, no ID is set on the wire.
 	ID string
 
-	// Type classifies the frame purpose. wspulse does not interpret this value.
+	// Event identifies the frame purpose. wspulse does not interpret this value.
 	// Conventional values: "msg" (user data), "sys" (system event), "ack" (acknowledgement).
-	Type string
+	Event string
 
 	// Payload is the encoded message body. Its format is determined by the Codec.
 	Payload []byte
