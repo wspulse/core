@@ -83,38 +83,57 @@ Core shared types used across the wspulse ecosystem.
 
 Gin-style event router for dispatching incoming `wspulse.Frame` values to registered handlers. Features global middleware, per-event handler chains, a configurable fallback for unmatched frames, and a built-in `Recovery()` middleware.
 
+#### Routing key — the `"type"` JSON field
+
+Every frame is encoded on the wire as a JSON object. The `"type"` field is what the router uses to select the handler:
+
+```json
+{"id":"msg-001","type":"chat.message","payload":{"text":"hello"}}
+```
+
+`frame.Type` on the Go side maps directly to `"type"` in JSON. Register handlers with `r.On("chat.message", ...)` to match that value.
+
+#### Usage
+
 ```go
 import (
     wspulse "github.com/wspulse/core"
     "github.com/wspulse/core/router"
 )
 
-rtr := router.New()
+r := router.New()
 
-// Global middleware (runs before every handler)
-rtr.Use(router.Recovery())
-rtr.Use(func(ctx *router.Context) {
-    // authenticate / rate-limit / etc.
-    ctx.Set("userID", authenticate(ctx.Connection))
-    ctx.Next()
+// Global middleware — runs before every handler
+r.Use(router.Recovery())
+r.Use(func(c *router.Context) {
+    // authenticate, rate-limit, set metadata …
+    c.Set("userID", authenticate(c.Connection))
+    c.Next()
 })
 
-// Per-event handlers
-rtr.On("chat", func(ctx *router.Context) {
-    userID := ctx.GetString("userID")
-    _ = ctx.Connection.Send(wspulse.Frame{Type: "ack", Payload: []byte(userID)})
+// Per-event handlers — matched against frame.Type ("type" in JSON)
+r.On("chat.message", func(c *router.Context) {
+    userID := c.GetString("userID")
+    _ = c.Connection.Send(wspulse.Frame{
+        Type:    "chat.ack",
+        Payload: []byte(`{"ok":true,"from":"`+userID+`"}`),
+    })
+})
+r.On("ping", func(c *router.Context) {
+    _ = c.Connection.Send(wspulse.Frame{Type: "pong"})
 })
 
-// Dispatch (typically called from your readPump goroutine)
-rtr.Dispatch(connection, frame)
+// Dispatch — call this from WithOnMessage in wspulse/server
+r.Dispatch(connection, frame)
 ```
 
 Key properties:
 
+- Routing key is `frame.Type`, which maps to the `"type"` field in the JSON wire format
 - `Context.Next()` / `Abort()` / `IsAborted()` flow control (same as Gin)
-- `Context.Set` / `Get` / `MustGet` / `GetString` typed key–value metadata
+- `Context.Set` / `Get` / `MustGet` / `GetString` typed key-value metadata
 - `sync.Pool`-backed Context recycling — **0 allocations per dispatch**
-- Lazy chain building: calling `Use` or `On` after the first `Dispatch` works correctly
+- Lazy chain building: `Use` or `On` can be called in any order before the first `Dispatch`
 - Panics at startup on empty event name or duplicate registration
 - Max chain length: 62 handlers (middleware + route handlers combined)
 
