@@ -20,7 +20,7 @@ type Option func(*Router)
 // incoming frame's Event. The fallback participates in the normal handler
 // chain, so global middleware registered via Use runs before it.
 //
-// The default fallback logs the unmatched frame type at WARN level using
+// The default fallback logs the unmatched frame event at WARN level using
 // the standard library's log/slog package.
 func WithFallback(fn HandlerFunc) Option {
 	if fn == nil {
@@ -59,6 +59,11 @@ type Router struct {
 	// merged signals that route chains have been built and are ready for dispatch.
 	// Reset to false whenever Use or On is called.
 	merged bool
+
+	// buildMu guards the lazy buildChains call in Dispatch, ensuring at most
+	// one goroutine builds the chains when multiple goroutines first call
+	// Dispatch concurrently.
+	buildMu sync.Mutex
 }
 
 // New returns a new Router with the provided options applied.
@@ -82,16 +87,30 @@ func New(opts ...Option) *Router {
 // Global middleware runs before every handler, including the fallback.
 // Use must not be called concurrently with Dispatch.
 func (r *Router) Use(handlers ...HandlerFunc) {
+	for i, h := range handlers {
+		if h == nil {
+			panic(fmt.Sprintf("router: Use: handler at index %d must not be nil", i))
+		}
+	}
 	r.handlers = append(r.handlers, handlers...)
 	r.merged = false
 }
 
 // On registers one or more handlers for the given Frame.Event value ("event" in
-// JSON). Panics if event is empty. Panics if event is already registered.
+// JSON). Panics if event is empty, if no handlers are provided, if any handler
+// is nil, or if event is already registered.
 // On must not be called concurrently with Dispatch.
 func (r *Router) On(event string, handlers ...HandlerFunc) {
 	if event == "" {
 		panic("router: On: event must not be empty")
+	}
+	if len(handlers) == 0 {
+		panic(fmt.Sprintf("router: On: no handlers provided for event %q", event))
+	}
+	for i, h := range handlers {
+		if h == nil {
+			panic(fmt.Sprintf("router: On: handler at index %d for event %q must not be nil", i, event))
+		}
 	}
 	if _, exists := r.rawRoutes[event]; exists {
 		panic(fmt.Sprintf("router: On: duplicate registration for event %q", event))
@@ -108,9 +127,11 @@ func (r *Router) On(event string, handlers ...HandlerFunc) {
 // routes have been registered. However, calling Use or On while Dispatch is
 // running is not safe.
 func (r *Router) Dispatch(conn Connection, frame wspulse.Frame) {
+	r.buildMu.Lock()
 	if !r.merged {
 		r.buildChains()
 	}
+	r.buildMu.Unlock()
 
 	c := r.pool.Get().(*Context)
 	c.reset()
@@ -143,7 +164,8 @@ func (r *Router) buildChains() {
 }
 
 // combineHandlers merges the global middleware with the provided handlers into
-// a single chain. Panics if the resulting chain would exceed maxChainLength (62).
+// a single chain. Panics if the resulting chain length would reach or exceed
+// maxChainLength (63); the maximum allowed number of handlers is abortIndex-1 (62).
 func (r *Router) combineHandlers(handlers HandlersChain) HandlersChain {
 	total := len(r.handlers) + len(handlers)
 	if total >= maxChainLength {

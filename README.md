@@ -40,7 +40,7 @@ if err != nil {
     log.Fatal(err)
 }
 
-fmt.Println(decoded.Type) // "msg"
+fmt.Println(decoded.Event) // "msg"
 
 // Check the codec's WebSocket frame type
 wspulse.JSONCodec.FrameType() // wspulse.TextMessage (1)
@@ -63,7 +63,7 @@ if errors.Is(err, wspulse.ErrSendBufferFull) {
 
 | Symbol                | Description                                                     |
 | --------------------- | --------------------------------------------------------------- |
-| `Frame`               | Transport unit: `ID`, `Type`, `Payload []byte`                  |
+| `Frame`               | Transport unit: `ID`, `Event`, `Payload []byte`                 |
 | `Codec`               | Interface: `Encode(Frame)`, `Decode([]byte)`, `FrameType() int` |
 | `JSONCodec`           | Default codec — JSON text frames                                |
 | `TextMessage`         | WebSocket text frame type constant (`1`)                        |
@@ -95,7 +95,7 @@ Every frame is encoded on the wire as a JSON object. The `"event"` field is what
 }
 ```
 
-`frame.Event` on the Go side maps directly to `"event"` in JSON. Register handlers with `r.On("chat.message", ...)` to match that value. The parameter is named `frameType` in `On()` to make this correspondence explicit.
+`frame.Event` on the Go side maps directly to `"event"` in JSON. Register handlers with `r.On("chat.message", ...)` to match that value. The first parameter to `On` is named `event` to make this correspondence explicit.
 
 #### Usage
 

@@ -1,5 +1,5 @@
 // Package router provides Gin-style event routing for wspulse frames.
-// Inbound frames are dispatched by [Frame.Event] through a middleware chain
+// Inbound frames are dispatched by [wspulse.Frame.Event] through a middleware chain
 // with flow control ([Context.Next]/[Context.Abort]) and metadata passing
 // ([Context.Set]/[Context.Get]).
 //

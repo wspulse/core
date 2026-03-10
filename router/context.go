@@ -68,7 +68,7 @@ func (c *Context) IsAborted() bool {
 }
 
 // Set stores a key/value pair in the per-dispatch metadata store.
-// Keys must be non-empty strings. The store is lazily initialized on first use.
+// Keys are arbitrary strings. The store is lazily initialized on first use.
 func (c *Context) Set(key string, value any) {
 	if c.keys == nil {
 		c.keys = make(map[string]any)

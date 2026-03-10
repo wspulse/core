@@ -162,6 +162,36 @@ func TestRouter_On_PanicsOnDuplicateRegistration(t *testing.T) {
 	rtr.On("ping", func(_ *router.Context) {})
 }
 
+func TestRouter_On_PanicsOnNoHandlers(t *testing.T) {
+	defer func() {
+		if recover() == nil {
+			t.Error("expected panic when On called with no handlers")
+		}
+	}()
+	rtr := router.New()
+	rtr.On("ping")
+}
+
+func TestRouter_On_PanicsOnNilHandler(t *testing.T) {
+	defer func() {
+		if recover() == nil {
+			t.Error("expected panic when On called with nil handler")
+		}
+	}()
+	rtr := router.New()
+	rtr.On("ping", nil)
+}
+
+func TestRouter_Use_PanicsOnNilHandler(t *testing.T) {
+	defer func() {
+		if recover() == nil {
+			t.Error("expected panic when Use called with nil handler")
+		}
+	}()
+	rtr := router.New()
+	rtr.Use(nil)
+}
+
 func TestRouter_CombineHandlers_PanicsWhenChainTooLong(t *testing.T) {
 	defer func() {
 		err := recover()
@@ -201,8 +231,7 @@ func BenchmarkDispatch(b *testing.B) {
 	frm := wspulse.Frame{Event: "ping"}
 
 	b.ReportAllocs()
-	b.ResetTimer()
-	for range b.N {
+	for b.Loop() {
 		rtr.Dispatch(conn, frm)
 	}
 }
