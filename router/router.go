@@ -17,7 +17,7 @@ const maxChainLength = int(abortIndex)
 type Option func(*Router)
 
 // WithFallback sets a custom handler invoked when no route matches the
-// incoming frame's Type. The fallback participates in the normal handler
+// incoming frame's Event. The fallback participates in the normal handler
 // chain, so global middleware registered via Use runs before it.
 //
 // The default fallback logs the unmatched frame type at WARN level using
@@ -32,7 +32,7 @@ func WithFallback(fn HandlerFunc) Option {
 }
 
 // Router dispatches inbound wspulse frames to registered handlers based on
-// Frame.Type. It supports global middleware (Use), per-event handlers (On),
+// Frame.Event. It supports global middleware (Use), per-event handlers (On),
 // and a configurable fallback for unmatched frames.
 //
 // Router is safe for concurrent reads after all routes have been registered.
@@ -41,7 +41,7 @@ type Router struct {
 	// handlers holds global middleware registered via Use.
 	handlers HandlersChain
 
-	// routes maps Frame.Type to the merged (middleware + handler) chain.
+	// routes maps Frame.Event to the merged (middleware + handler) chain.
 	// Chains are merged lazily at the first Dispatch call.
 	routes map[string]HandlersChain
 
@@ -50,7 +50,7 @@ type Router struct {
 	// calls are respected.
 	rawRoutes map[string]HandlersChain
 
-	// fallback is called when no route matches Frame.Type.
+	// fallback is called when no route matches Frame.Event.
 	fallback HandlerFunc
 
 	// pool recycles Context objects to eliminate per-dispatch allocations.
@@ -86,12 +86,12 @@ func (r *Router) Use(handlers ...HandlerFunc) {
 	r.merged = false
 }
 
-// On registers one or more handlers for the given event name (Frame.Type).
-// Panics if event is empty. Panics if event is already registered.
+// On registers one or more handlers for the given Frame.Event value ("event" in
+// JSON). Panics if event is empty. Panics if event is already registered.
 // On must not be called concurrently with Dispatch.
 func (r *Router) On(event string, handlers ...HandlerFunc) {
 	if event == "" {
-		panic("router: On: event name must not be empty")
+		panic("router: On: event must not be empty")
 	}
 	if _, exists := r.rawRoutes[event]; exists {
 		panic(fmt.Sprintf("router: On: duplicate registration for event %q", event))
@@ -100,8 +100,8 @@ func (r *Router) On(event string, handlers ...HandlerFunc) {
 	r.merged = false
 }
 
-// Dispatch looks up the handler chain for frame.Type and executes it.
-// If no handler is registered for frame.Type, the fallback is called instead.
+// Dispatch looks up the handler chain for frame.Event and executes it.
+// If no handler is registered for frame.Event, the fallback is called instead.
 // Global middleware runs before the matched handler or fallback in all cases.
 //
 // Dispatch is safe to call concurrently from multiple goroutines after all
@@ -118,7 +118,7 @@ func (r *Router) Dispatch(conn Connection, frame wspulse.Frame) {
 	c.Frame = frame
 	c.index = -1
 
-	chain, exists := r.routes[frame.Type]
+	chain, exists := r.routes[frame.Event]
 	if !exists {
 		chain = r.routes[""]
 	}
@@ -159,10 +159,10 @@ func (r *Router) combineHandlers(handlers HandlersChain) HandlersChain {
 }
 
 // defaultFallback is the built-in fallback handler. It logs the unmatched
-// frame type at WARN level using log/slog (Go 1.21+ stdlib).
+// event at WARN level using log/slog (Go 1.21+ stdlib).
 func defaultFallback(c *Context) {
-	slog.Warn("router: unmatched frame type",
-		"frameType", c.Frame.Type,
+	slog.Warn("router: unmatched event",
+		"event", c.Frame.Event,
 		"connectionID", c.Connection.ID(),
 	)
 }

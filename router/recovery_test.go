@@ -21,7 +21,7 @@ func TestRecovery_CatchesPanicAndContinues(t *testing.T) {
 		}
 	}()
 
-	rtr.Dispatch(newMockConnection("c1", "r1"), wspulse.Frame{Type: "ping"})
+	rtr.Dispatch(newMockConnection("c1", "r1"), wspulse.Frame{Event: "ping"})
 	afterRecoveryCalled = true
 
 	if !afterRecoveryCalled {
@@ -36,7 +36,7 @@ func TestRecovery_NonPanicPathUnaffected(t *testing.T) {
 	rtr.Use(router.Recovery())
 	rtr.On("ping", func(_ *router.Context) { called = true })
 
-	rtr.Dispatch(newMockConnection("c1", "r1"), wspulse.Frame{Type: "ping"})
+	rtr.Dispatch(newMockConnection("c1", "r1"), wspulse.Frame{Event: "ping"})
 
 	if !called {
 		t.Error("handler should be called when no panic occurs")
@@ -53,7 +53,7 @@ func TestRecovery_ChainContinuesAfterRecovery(t *testing.T) {
 	rtr.Use(func(ctx *router.Context) { secondCalled = true; ctx.Next() })
 	rtr.On("ping", func(_ *router.Context) {})
 
-	rtr.Dispatch(newMockConnection("c1", "r1"), wspulse.Frame{Type: "ping"})
+	rtr.Dispatch(newMockConnection("c1", "r1"), wspulse.Frame{Event: "ping"})
 
 	if !secondCalled {
 		t.Error("subsequent middleware should be called when Recovery is installed and no panic occurs")
@@ -71,5 +71,5 @@ func TestRecovery_PanicWithNilValue(t *testing.T) {
 	rtr.Use(router.Recovery())
 	rtr.On("ping", func(_ *router.Context) { panic(nil) }) //nolint:gocritic
 
-	rtr.Dispatch(newMockConnection("c1", "r1"), wspulse.Frame{Type: "ping"})
+	rtr.Dispatch(newMockConnection("c1", "r1"), wspulse.Frame{Event: "ping"})
 }

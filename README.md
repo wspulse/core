@@ -24,7 +24,7 @@ import wspulse "github.com/wspulse/core"
 // Create a frame
 frame := wspulse.Frame{
     ID:      "msg-001",
-    Type:    "msg",
+    Event:    "msg",
     Payload: []byte(`{"text":"hello"}`),
 }
 
@@ -83,15 +83,19 @@ Core shared types used across the wspulse ecosystem.
 
 Gin-style event router for dispatching incoming `wspulse.Frame` values to registered handlers. Features global middleware, per-event handler chains, a configurable fallback for unmatched frames, and a built-in `Recovery()` middleware.
 
-#### Routing key — the `"type"` JSON field
+#### Routing key — the `"event"` JSON field
 
-Every frame is encoded on the wire as a JSON object. The `"type"` field is what the router uses to select the handler:
+Every frame is encoded on the wire as a JSON object. The `"event"` field is what the router uses to select the handler:
 
 ```json
-{"id":"msg-001","type":"chat.message","payload":{"text":"hello"}}
+{
+  "id": "msg-001",
+  "event": "chat.message",
+  "payload": { "text": "hello" }
+}
 ```
 
-`frame.Type` on the Go side maps directly to `"type"` in JSON. Register handlers with `r.On("chat.message", ...)` to match that value.
+`frame.Event` on the Go side maps directly to `"event"` in JSON. Register handlers with `r.On("chat.message", ...)` to match that value. The parameter is named `frameType` in `On()` to make this correspondence explicit.
 
 #### Usage
 
@@ -111,16 +115,16 @@ r.Use(func(c *router.Context) {
     c.Next()
 })
 
-// Per-event handlers — matched against frame.Type ("type" in JSON)
+// Per-event handlers — matched against frame.Event ("event" in JSON)
 r.On("chat.message", func(c *router.Context) {
     userID := c.GetString("userID")
     _ = c.Connection.Send(wspulse.Frame{
-        Type:    "chat.ack",
+        Event:    "chat.ack",
         Payload: []byte(`{"ok":true,"from":"`+userID+`"}`),
     })
 })
 r.On("ping", func(c *router.Context) {
-    _ = c.Connection.Send(wspulse.Frame{Type: "pong"})
+    _ = c.Connection.Send(wspulse.Frame{Event: "pong"})
 })
 
 // Dispatch — call this from WithOnMessage in wspulse/server
@@ -129,7 +133,7 @@ r.Dispatch(connection, frame)
 
 Key properties:
 
-- Routing key is `frame.Type`, which maps to the `"type"` field in the JSON wire format
+- Routing key is `frame.Event`, which maps to the `"event"` field in the JSON wire format
 - `Context.Next()` / `Abort()` / `IsAborted()` flow control (same as Gin)
 - `Context.Set` / `Get` / `MustGet` / `GetString` typed key-value metadata
 - `sync.Pool`-backed Context recycling — **0 allocations per dispatch**

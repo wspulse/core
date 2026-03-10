@@ -16,7 +16,7 @@ func TestRouter_On_DispatchRoutesToRegisteredHandler(t *testing.T) {
 	rtr := router.New()
 	rtr.On("ping", func(_ *router.Context) { called = true })
 
-	rtr.Dispatch(newMockConnection("c1", "r1"), wspulse.Frame{Type: "ping"})
+	rtr.Dispatch(newMockConnection("c1", "r1"), wspulse.Frame{Event: "ping"})
 
 	if !called {
 		t.Error("registered handler was not called")
@@ -26,7 +26,7 @@ func TestRouter_On_DispatchRoutesToRegisteredHandler(t *testing.T) {
 func TestRouter_On_UnmatchedFrameCallsFallback(t *testing.T) {
 	defaultFallbackCalled := false
 	customFallback := func(ctx *router.Context) {
-		if ctx.Frame.Type == "unknown" {
+		if ctx.Frame.Event == "unknown" {
 			defaultFallbackCalled = true
 		}
 	}
@@ -34,7 +34,7 @@ func TestRouter_On_UnmatchedFrameCallsFallback(t *testing.T) {
 	rtr := router.New(router.WithFallback(customFallback))
 	rtr.On("ping", func(_ *router.Context) {})
 
-	rtr.Dispatch(newMockConnection("c1", "r1"), wspulse.Frame{Type: "unknown"})
+	rtr.Dispatch(newMockConnection("c1", "r1"), wspulse.Frame{Event: "unknown"})
 
 	if !defaultFallbackCalled {
 		t.Error("fallback was not called for unmatched frame type")
@@ -48,7 +48,7 @@ func TestRouter_On_DispatchRoutesCorrectEvent(t *testing.T) {
 	rtr.On("ping", func(_ *router.Context) { received = "ping" })
 	rtr.On("chat", func(_ *router.Context) { received = "chat" })
 
-	rtr.Dispatch(newMockConnection("c1", "r1"), wspulse.Frame{Type: "chat"})
+	rtr.Dispatch(newMockConnection("c1", "r1"), wspulse.Frame{Event: "chat"})
 
 	if received != "chat" {
 		t.Errorf("expected %q, got %q", "chat", received)
@@ -64,7 +64,7 @@ func TestRouter_Use_MiddlewareRunsBeforeHandler(t *testing.T) {
 	rtr.Use(func(ctx *router.Context) { order = append(order, "middleware"); ctx.Next() })
 	rtr.On("ping", func(_ *router.Context) { order = append(order, "handler") })
 
-	rtr.Dispatch(newMockConnection("c1", "r1"), wspulse.Frame{Type: "ping"})
+	rtr.Dispatch(newMockConnection("c1", "r1"), wspulse.Frame{Event: "ping"})
 
 	if len(order) != 2 || order[0] != "middleware" || order[1] != "handler" {
 		t.Errorf("unexpected order: %v", order)
@@ -78,7 +78,7 @@ func TestRouter_Use_AbortInMiddlewareBlocksHandler(t *testing.T) {
 	rtr.Use(func(ctx *router.Context) { ctx.Abort() })
 	rtr.On("ping", func(_ *router.Context) { handlerCalled = true })
 
-	rtr.Dispatch(newMockConnection("c1", "r1"), wspulse.Frame{Type: "ping"})
+	rtr.Dispatch(newMockConnection("c1", "r1"), wspulse.Frame{Event: "ping"})
 
 	if handlerCalled {
 		t.Error("handler should not be called after middleware Abort")
@@ -91,10 +91,10 @@ func TestRouter_WithFallback_CalledForUnregisteredEvent(t *testing.T) {
 	var gotType string
 
 	rtr := router.New(router.WithFallback(func(ctx *router.Context) {
-		gotType = ctx.Frame.Type
+		gotType = ctx.Frame.Event
 	}))
 
-	rtr.Dispatch(newMockConnection("c1", "r1"), wspulse.Frame{Type: "mystery"})
+	rtr.Dispatch(newMockConnection("c1", "r1"), wspulse.Frame{Event: "mystery"})
 
 	if gotType != "mystery" {
 		t.Errorf("expected %q, got %q", "mystery", gotType)
@@ -109,7 +109,7 @@ func TestRouter_WithFallback_RegisteredEventDoesNotUseFallback(t *testing.T) {
 	}))
 	rtr.On("ping", func(_ *router.Context) {})
 
-	rtr.Dispatch(newMockConnection("c1", "r1"), wspulse.Frame{Type: "ping"})
+	rtr.Dispatch(newMockConnection("c1", "r1"), wspulse.Frame{Event: "ping"})
 
 	if fallbackCalled {
 		t.Error("fallback should not be called for a registered event")
@@ -136,7 +136,7 @@ func TestRouter_DefaultFallback_CalledForUnmatchedFrameWithNoCustomFallback(t *t
 			t.Error("defaultFallback must not panic")
 		}
 	}()
-	rtr.Dispatch(newMockConnection("c1", "r1"), wspulse.Frame{Type: "unknown"})
+	rtr.Dispatch(newMockConnection("c1", "r1"), wspulse.Frame{Event: "unknown"})
 }
 
 // ---- panic on misuse --------------------------------------------------------
@@ -144,7 +144,7 @@ func TestRouter_DefaultFallback_CalledForUnmatchedFrameWithNoCustomFallback(t *t
 func TestRouter_On_PanicsOnEmptyEventName(t *testing.T) {
 	defer func() {
 		if recover() == nil {
-			t.Error("expected panic for empty event name")
+			t.Error("expected panic for empty event")
 		}
 	}()
 	rtr := router.New()
@@ -187,7 +187,7 @@ func TestRouter_CombineHandlers_PanicsWhenChainTooLong(t *testing.T) {
 	}
 	rtr.On("ping", func(_ *router.Context) {})
 	// buildChains is lazy — the panic fires on the first Dispatch call.
-	rtr.Dispatch(newMockConnection("c1", "r1"), wspulse.Frame{Type: "ping"})
+	rtr.Dispatch(newMockConnection("c1", "r1"), wspulse.Frame{Event: "ping"})
 }
 
 // ---- benchmark ---------------------------------------------------------------
@@ -198,7 +198,7 @@ func BenchmarkDispatch(b *testing.B) {
 	rtr.On("ping", func(_ *router.Context) {})
 
 	conn := newMockConnection("bench-conn", "bench-room")
-	frm := wspulse.Frame{Type: "ping"}
+	frm := wspulse.Frame{Event: "ping"}
 
 	b.ReportAllocs()
 	b.ResetTimer()
