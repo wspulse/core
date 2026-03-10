@@ -36,7 +36,7 @@ make tidy       # tidy module dependencies
   - Each commit must represent exactly one logical change.
   - Before every commit, run `make check` (runs fmt → lint → test in order).
 - **Tests**: co-located with source (`_test.go`). Cover happy path and at least one error path.
-  - **Test-first for bug fixes**: when a bug is discovered, write a failing test that reproduces it before touching production code. The PR must include this test.
+  - **Test-first for bug fixes**: **mandatory** — see Critical Rule 6 for the required step-by-step procedure. Do not touch production code without a prior failing test.
   - **Benchmarks**: changes to encoding or frame allocation must include a benchmark. Verify with `make bench`.
 - **API compatibility**:
   - Exported symbols are a public contract. Changing or removing any exported identifier is a breaking change requiring a major version bump.
@@ -51,8 +51,15 @@ make tidy       # tidy module dependencies
 3. **No hardcoded secrets** — all configuration via environment variables.
 4. **Zero external dependencies** — core must only depend on Go stdlib. Any change introducing an external dependency must be explicitly justified and approved.
 5. **No breaking changes without version bump** — never rename, remove, or change the signature of an exported symbol without bumping the major version. When unsure, add alongside the old symbol and deprecate.
-6. **Accuracy** — if you have questions or need clarification, ask the user. Do not make assumptions without confirming.
-7. **Language consistency** — when the user writes in Traditional Chinese, respond in Traditional Chinese; otherwise respond in English.
+6. **STOP — test first, fix second** — when a bug is discovered or reported, do NOT touch production code until a failing test exists. Follow this exact sequence without skipping or reordering:
+   1. Write a failing test that reproduces the bug.
+   2. Run the test and confirm it **fails** (proving the test actually catches the bug).
+   3. Fix the production code.
+   4. Run the test again and confirm it **passes**.
+   5. Run `make check` to verify nothing else broke.
+      If you are about to edit production code and no failing test exists yet — stop and go back to step 1.
+7. **Accuracy** — if you have questions or need clarification, ask the user. Do not make assumptions without confirming.
+8. **Language consistency** — when the user writes in Traditional Chinese, respond in Traditional Chinese; otherwise respond in English.
 
 ## Session Protocol
 
