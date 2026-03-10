@@ -73,6 +73,53 @@ if errors.Is(err, wspulse.ErrSendBufferFull) {
 
 ---
 
+## Packages
+
+### `github.com/wspulse/core` (root)
+
+Core shared types used across the wspulse ecosystem.
+
+### `github.com/wspulse/core/router`
+
+Gin-style event router for dispatching incoming `wspulse.Frame` values to registered handlers. Features global middleware, per-event handler chains, a configurable fallback for unmatched frames, and a built-in `Recovery()` middleware.
+
+```go
+import (
+    wspulse "github.com/wspulse/core"
+    "github.com/wspulse/core/router"
+)
+
+rtr := router.New()
+
+// Global middleware (runs before every handler)
+rtr.Use(router.Recovery())
+rtr.Use(func(ctx *router.Context) {
+    // authenticate / rate-limit / etc.
+    ctx.Set("userID", authenticate(ctx.Connection))
+    ctx.Next()
+})
+
+// Per-event handlers
+rtr.On("chat", func(ctx *router.Context) {
+    userID := ctx.GetString("userID")
+    _ = ctx.Connection.Send(wspulse.Frame{Type: "ack", Payload: []byte(userID)})
+})
+
+// Dispatch (typically called from your readPump goroutine)
+rtr.Dispatch(connection, frame)
+```
+
+Key properties:
+
+- `Context.Next()` / `Abort()` / `IsAborted()` flow control (same as Gin)
+- `Context.Set` / `Get` / `MustGet` / `GetString` typed key–value metadata
+- `sync.Pool`-backed Context recycling — **0 allocations per dispatch**
+- Lazy chain building: calling `Use` or `On` after the first `Dispatch` works correctly
+- Panics at startup on empty event name or duplicate registration
+- Max chain length: 62 handlers (middleware + route handlers combined)
+
+---
+
 ## Related
 
 - [wspulse/server](https://github.com/wspulse/server) — WebSocket server library
