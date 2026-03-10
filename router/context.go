@@ -47,44 +47,44 @@ type Context struct {
 
 // Next executes the remaining handlers in the chain. It should be called
 // inside middleware to pass control to the next handler.
-func (ctx *Context) Next() {
-	ctx.index++
-	for ctx.index < int8(len(ctx.handlers)) {
-		ctx.handlers[ctx.index](ctx)
-		ctx.index++
+func (c *Context) Next() {
+	c.index++
+	for c.index < int8(len(c.handlers)) {
+		c.handlers[c.index](c)
+		c.index++
 	}
 }
 
 // Abort prevents any remaining handlers in the chain from being called.
 // The current handler continues executing normally after Abort; only
 // subsequent handlers are skipped.
-func (ctx *Context) Abort() {
-	ctx.index = abortIndex
+func (c *Context) Abort() {
+	c.index = abortIndex
 }
 
 // IsAborted reports whether Abort has been called on this context.
-func (ctx *Context) IsAborted() bool {
-	return ctx.index >= abortIndex
+func (c *Context) IsAborted() bool {
+	return c.index >= abortIndex
 }
 
 // Set stores a key/value pair in the per-dispatch metadata store.
 // Keys must be non-empty strings. The store is lazily initialized on first use.
-func (ctx *Context) Set(key string, value any) {
-	if ctx.keys == nil {
-		ctx.keys = make(map[string]any)
+func (c *Context) Set(key string, value any) {
+	if c.keys == nil {
+		c.keys = make(map[string]any)
 	}
-	ctx.keys[key] = value
+	c.keys[key] = value
 }
 
 // Get returns the value stored under key and whether it exists.
-func (ctx *Context) Get(key string) (any, bool) {
-	value, exists := ctx.keys[key]
+func (c *Context) Get(key string) (any, bool) {
+	value, exists := c.keys[key]
 	return value, exists
 }
 
 // MustGet returns the value stored under key. It panics if the key does not exist.
-func (ctx *Context) MustGet(key string) any {
-	value, exists := ctx.Get(key)
+func (c *Context) MustGet(key string) any {
+	value, exists := c.Get(key)
 	if !exists {
 		panic("router: key not found in context: " + key)
 	}
@@ -93,8 +93,8 @@ func (ctx *Context) MustGet(key string) any {
 
 // GetString returns the string value stored under key, or "" if the key does
 // not exist or its value is not a string.
-func (ctx *Context) GetString(key string) string {
-	value, exists := ctx.keys[key]
+func (c *Context) GetString(key string) string {
+	value, exists := c.keys[key]
 	if !exists {
 		return ""
 	}
@@ -103,10 +103,10 @@ func (ctx *Context) GetString(key string) string {
 }
 
 // reset clears all fields so the Context can be safely returned to the pool.
-func (ctx *Context) reset() {
-	ctx.Connection = nil
-	ctx.Frame = wspulse.Frame{}
-	ctx.handlers = nil
-	ctx.index = -1
-	ctx.keys = nil
+func (c *Context) reset() {
+	c.Connection = nil
+	c.Frame = wspulse.Frame{}
+	c.handlers = nil
+	c.index = -1
+	c.keys = nil
 }

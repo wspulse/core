@@ -13,21 +13,21 @@ import (
 //
 // Place Recovery as the first middleware so it wraps the entire chain:
 //
-//	rtr := router.New()
-//	rtr.Use(router.Recovery())
-//	rtr.On("chat.message", handleChat)
+//	//	r := router.New()
+//	//	r.Use(router.Recovery())
+//	//	r.On("chat.message", handleChat)
 func Recovery() HandlerFunc {
-	return func(ctx *Context) {
+	return func(c *Context) {
 		defer func() {
-			if panicValue := recover(); panicValue != nil {
+			if v := recover(); v != nil {
 				slog.Error("router: recovered from panic in handler",
-					"panic", fmt.Sprintf("%v", panicValue),
+					"panic", fmt.Sprintf("%v", v),
 					"stack", string(debug.Stack()),
-					"frameType", ctx.Frame.Type,
-					"connectionID", ctx.Connection.ID(),
+					"frameType", c.Frame.Type,
+					"connectionID", c.Connection.ID(),
 				)
 			}
 		}()
-		ctx.Next()
+		c.Next()
 	}
 }

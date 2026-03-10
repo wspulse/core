@@ -26,8 +26,8 @@ func WithFallback(fn HandlerFunc) Option {
 	if fn == nil {
 		panic("router: WithFallback: handler must not be nil")
 	}
-	return func(rtr *Router) {
-		rtr.fallback = fn
+	return func(r *Router) {
+		r.fallback = fn
 	}
 }
 
@@ -64,40 +64,40 @@ type Router struct {
 // New returns a new Router with the provided options applied.
 // The default fallback logs unmatched frame types at WARN level.
 func New(opts ...Option) *Router {
-	rtr := &Router{
+	r := &Router{
 		routes:    make(map[string]HandlersChain),
 		rawRoutes: make(map[string]HandlersChain),
 		fallback:  defaultFallback,
 	}
-	rtr.pool.New = func() any {
+	r.pool.New = func() any {
 		return &Context{}
 	}
 	for _, opt := range opts {
-		opt(rtr)
+		opt(r)
 	}
-	return rtr
+	return r
 }
 
 // Use appends one or more middleware handlers to the global middleware chain.
 // Global middleware runs before every handler, including the fallback.
 // Use must not be called concurrently with Dispatch.
-func (rtr *Router) Use(middleware ...HandlerFunc) {
-	rtr.handlers = append(rtr.handlers, middleware...)
-	rtr.merged = false
+func (r *Router) Use(handlers ...HandlerFunc) {
+	r.handlers = append(r.handlers, handlers...)
+	r.merged = false
 }
 
 // On registers one or more handlers for the given event name (Frame.Type).
 // Panics if event is empty. Panics if event is already registered.
 // On must not be called concurrently with Dispatch.
-func (rtr *Router) On(event string, handlers ...HandlerFunc) {
+func (r *Router) On(event string, handlers ...HandlerFunc) {
 	if event == "" {
 		panic("router: On: event name must not be empty")
 	}
-	if _, exists := rtr.rawRoutes[event]; exists {
+	if _, exists := r.rawRoutes[event]; exists {
 		panic(fmt.Sprintf("router: On: duplicate registration for event %q", event))
 	}
-	rtr.rawRoutes[event] = handlers
-	rtr.merged = false
+	r.rawRoutes[event] = handlers
+	r.merged = false
 }
 
 // Dispatch looks up the handler chain for frame.Type and executes it.
@@ -107,45 +107,45 @@ func (rtr *Router) On(event string, handlers ...HandlerFunc) {
 // Dispatch is safe to call concurrently from multiple goroutines after all
 // routes have been registered. However, calling Use or On while Dispatch is
 // running is not safe.
-func (rtr *Router) Dispatch(connection Connection, frame wspulse.Frame) {
-	if !rtr.merged {
-		rtr.buildChains()
+func (r *Router) Dispatch(conn Connection, frame wspulse.Frame) {
+	if !r.merged {
+		r.buildChains()
 	}
 
-	ctx := rtr.pool.Get().(*Context)
-	ctx.reset()
-	ctx.Connection = connection
-	ctx.Frame = frame
-	ctx.index = -1
+	c := r.pool.Get().(*Context)
+	c.reset()
+	c.Connection = conn
+	c.Frame = frame
+	c.index = -1
 
-	chain, exists := rtr.routes[frame.Type]
+	chain, exists := r.routes[frame.Type]
 	if !exists {
-		chain = rtr.routes[""]
+		chain = r.routes[""]
 	}
-	ctx.handlers = chain
-	ctx.Next()
+	c.handlers = chain
+	c.Next()
 
-	rtr.pool.Put(ctx)
+	r.pool.Put(c)
 }
 
 // buildChains merges global middleware with each route's handlers and the
 // fallback, caching the result in routes.
-func (rtr *Router) buildChains() {
-	rtr.routes = make(map[string]HandlersChain, len(rtr.rawRoutes)+1)
+func (r *Router) buildChains() {
+	r.routes = make(map[string]HandlersChain, len(r.rawRoutes)+1)
 
-	for event, handlers := range rtr.rawRoutes {
-		rtr.routes[event] = rtr.combineHandlers(handlers)
+	for event, handlers := range r.rawRoutes {
+		r.routes[event] = r.combineHandlers(handlers)
 	}
 	// The empty string key is the fallback chain.
-	rtr.routes[""] = rtr.combineHandlers(HandlersChain{rtr.fallback})
+	r.routes[""] = r.combineHandlers(HandlersChain{r.fallback})
 
-	rtr.merged = true
+	r.merged = true
 }
 
 // combineHandlers merges the global middleware with the provided handlers into
 // a single chain. Panics if the resulting chain would exceed maxChainLength (62).
-func (rtr *Router) combineHandlers(handlers HandlersChain) HandlersChain {
-	total := len(rtr.handlers) + len(handlers)
+func (r *Router) combineHandlers(handlers HandlersChain) HandlersChain {
+	total := len(r.handlers) + len(handlers)
 	if total >= maxChainLength {
 		panic(fmt.Sprintf(
 			"router: handler chain length %d exceeds maximum %d",
@@ -153,16 +153,16 @@ func (rtr *Router) combineHandlers(handlers HandlersChain) HandlersChain {
 		))
 	}
 	merged := make(HandlersChain, total)
-	copy(merged, rtr.handlers)
-	copy(merged[len(rtr.handlers):], handlers)
+	copy(merged, r.handlers)
+	copy(merged[len(r.handlers):], handlers)
 	return merged
 }
 
 // defaultFallback is the built-in fallback handler. It logs the unmatched
 // frame type at WARN level using log/slog (Go 1.21+ stdlib).
-func defaultFallback(ctx *Context) {
+func defaultFallback(c *Context) {
 	slog.Warn("router: unmatched frame type",
-		"frameType", ctx.Frame.Type,
-		"connectionID", ctx.Connection.ID(),
+		"frameType", c.Frame.Type,
+		"connectionID", c.Connection.ID(),
 	)
 }
