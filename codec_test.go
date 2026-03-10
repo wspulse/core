@@ -3,6 +3,8 @@ package wspulse_test
 import (
 	"bytes"
 	"encoding/json"
+	"strings"
+	"sync"
 	"testing"
 
 	wspulse "github.com/wspulse/core"
@@ -140,6 +142,261 @@ func TestJSONCodec_Roundtrip_NilPayload(t *testing.T) {
 		t.Errorf("fields changed: got %+v", decoded)
 	}
 }
+
+// ---- Lifecycle: buffer independence -----------------------------------------
+
+func TestJSONCodec_Decode_PayloadIsIndependentFromInput(t *testing.T) {
+	input := []byte(`{"type":"msg","payload":{"key":"value"}}`)
+	original := make([]byte, len(input))
+	copy(original, input)
+
+	frame, err := wspulse.JSONCodec.Decode(input)
+	if err != nil {
+		t.Fatalf("Decode failed: %v", err)
+	}
+
+	// Overwrite the input buffer to simulate buffer reuse in a read loop.
+	for i := range input {
+		input[i] = 'X'
+	}
+
+	// The decoded Frame's Payload must remain intact.
+	if !bytes.Contains(frame.Payload, []byte(`"key"`)) {
+		t.Errorf("Payload corrupted after input buffer modification: %s", frame.Payload)
+	}
+}
+
+func TestJSONCodec_Encode_OutputIsIndependentFromInput(t *testing.T) {
+	payload := []byte(`{"mutable":"yes"}`)
+	frame := wspulse.Frame{Type: "msg", Payload: payload}
+
+	data, err := wspulse.JSONCodec.Encode(frame)
+	if err != nil {
+		t.Fatalf("Encode failed: %v", err)
+	}
+	snapshot := make([]byte, len(data))
+	copy(snapshot, data)
+
+	// Mutate the original Payload after Encode.
+	for i := range payload {
+		payload[i] = '0'
+	}
+
+	// Encoded output must remain intact.
+	if !bytes.Equal(data, snapshot) {
+		t.Errorf("Encode output changed after input mutation: got %s", data)
+	}
+}
+
+// ---- Edge cases: Payload variants -------------------------------------------
+
+func TestJSONCodec_Encode_InvalidPayload_ReturnsError(t *testing.T) {
+	frame := wspulse.Frame{Type: "msg", Payload: []byte("not valid json")}
+	_, err := wspulse.JSONCodec.Encode(frame)
+	if err == nil {
+		t.Error("expected error when Payload is not valid JSON")
+	}
+}
+
+func TestJSONCodec_Roundtrip_NullPayload(t *testing.T) {
+	original := wspulse.Frame{Type: "msg", Payload: []byte("null")}
+	data, err := wspulse.JSONCodec.Encode(original)
+	if err != nil {
+		t.Fatalf("Encode failed: %v", err)
+	}
+	decoded, err := wspulse.JSONCodec.Decode(data)
+	if err != nil {
+		t.Fatalf("Decode failed: %v", err)
+	}
+	if string(decoded.Payload) != "null" {
+		t.Errorf("Payload: want %q, got %q", "null", string(decoded.Payload))
+	}
+}
+
+func TestJSONCodec_Roundtrip_ArrayPayload(t *testing.T) {
+	original := wspulse.Frame{Type: "list", Payload: []byte(`[1,2,3]`)}
+	data, _ := wspulse.JSONCodec.Encode(original)
+	decoded, err := wspulse.JSONCodec.Decode(data)
+	if err != nil {
+		t.Fatalf("Decode failed: %v", err)
+	}
+	if !bytes.Equal(decoded.Payload, original.Payload) {
+		t.Errorf("Payload: want %s, got %s", original.Payload, decoded.Payload)
+	}
+}
+
+func TestJSONCodec_Roundtrip_StringPayload(t *testing.T) {
+	original := wspulse.Frame{Type: "echo", Payload: []byte(`"hello world"`)}
+	data, _ := wspulse.JSONCodec.Encode(original)
+	decoded, err := wspulse.JSONCodec.Decode(data)
+	if err != nil {
+		t.Fatalf("Decode failed: %v", err)
+	}
+	if !bytes.Equal(decoded.Payload, original.Payload) {
+		t.Errorf("Payload: want %s, got %s", original.Payload, decoded.Payload)
+	}
+}
+
+func TestJSONCodec_Roundtrip_NumericPayload(t *testing.T) {
+	original := wspulse.Frame{Type: "val", Payload: []byte(`42`)}
+	data, _ := wspulse.JSONCodec.Encode(original)
+	decoded, err := wspulse.JSONCodec.Decode(data)
+	if err != nil {
+		t.Fatalf("Decode failed: %v", err)
+	}
+	if !bytes.Equal(decoded.Payload, original.Payload) {
+		t.Errorf("Payload: want %s, got %s", original.Payload, decoded.Payload)
+	}
+}
+
+func TestJSONCodec_Roundtrip_UnicodePayload(t *testing.T) {
+	original := wspulse.Frame{
+		Type:    "msg",
+		Payload: []byte(`{"text":"你好世界 🌍"}`),
+	}
+	data, err := wspulse.JSONCodec.Encode(original)
+	if err != nil {
+		t.Fatalf("Encode failed: %v", err)
+	}
+	decoded, err := wspulse.JSONCodec.Decode(data)
+	if err != nil {
+		t.Fatalf("Decode failed: %v", err)
+	}
+	if !bytes.Equal(decoded.Payload, original.Payload) {
+		t.Errorf("Payload: want %s, got %s", original.Payload, decoded.Payload)
+	}
+}
+
+func TestJSONCodec_Roundtrip_DeeplyNestedPayload(t *testing.T) {
+	original := wspulse.Frame{
+		Type:    "nested",
+		Payload: []byte(`{"a":{"b":{"c":{"d":"deep"}}}}`),
+	}
+	data, _ := wspulse.JSONCodec.Encode(original)
+	decoded, err := wspulse.JSONCodec.Decode(data)
+	if err != nil {
+		t.Fatalf("Decode failed: %v", err)
+	}
+	if !bytes.Equal(decoded.Payload, original.Payload) {
+		t.Errorf("Payload: want %s, got %s", original.Payload, decoded.Payload)
+	}
+}
+
+// ---- Forward compatibility: unknown fields ----------------------------------
+
+func TestJSONCodec_Decode_ExtraFields_Ignored(t *testing.T) {
+	input := `{"id":"1","type":"msg","payload":{"k":"v"},"version":2,"extra":"ignored"}`
+	frame, err := wspulse.JSONCodec.Decode([]byte(input))
+	if err != nil {
+		t.Fatalf("Decode failed: %v", err)
+	}
+	if frame.ID != "1" || frame.Type != "msg" {
+		t.Errorf("unexpected field values: %+v", frame)
+	}
+}
+
+func TestJSONCodec_Decode_NullPayloadField(t *testing.T) {
+	input := `{"type":"ping","payload":null}`
+	frame, err := wspulse.JSONCodec.Decode([]byte(input))
+	if err != nil {
+		t.Fatalf("Decode failed: %v", err)
+	}
+	if string(frame.Payload) != "null" {
+		t.Errorf("Payload: want %q, got %q", "null", string(frame.Payload))
+	}
+}
+
+// ---- Concurrency safety -----------------------------------------------------
+
+func TestJSONCodec_ConcurrentEncodeDecode(t *testing.T) {
+	const goroutines = 50
+	var waitGroup sync.WaitGroup
+	waitGroup.Add(goroutines)
+
+	for i := 0; i < goroutines; i++ {
+		go func() {
+			defer waitGroup.Done()
+
+			original := wspulse.Frame{
+				ID:      "concurrent",
+				Type:    "msg",
+				Payload: []byte(`{"data":"test"}`),
+			}
+			data, err := wspulse.JSONCodec.Encode(original)
+			if err != nil {
+				t.Errorf("Encode failed: %v", err)
+				return
+			}
+			decoded, err := wspulse.JSONCodec.Decode(data)
+			if err != nil {
+				t.Errorf("Decode failed: %v", err)
+				return
+			}
+			if decoded.ID != original.ID || decoded.Type != original.Type {
+				t.Errorf("roundtrip mismatch: got %+v", decoded)
+			}
+		}()
+	}
+	waitGroup.Wait()
+}
+
+// ---- Large payload ----------------------------------------------------------
+
+func TestJSONCodec_Roundtrip_LargePayload(t *testing.T) {
+	// Build a ~10 KB JSON payload.
+	value := strings.Repeat("x", 10000)
+	payload, _ := json.Marshal(map[string]string{"big": value})
+	original := wspulse.Frame{Type: "bulk", Payload: payload}
+
+	data, err := wspulse.JSONCodec.Encode(original)
+	if err != nil {
+		t.Fatalf("Encode failed: %v", err)
+	}
+	decoded, err := wspulse.JSONCodec.Decode(data)
+	if err != nil {
+		t.Fatalf("Decode failed: %v", err)
+	}
+	if !bytes.Equal(decoded.Payload, original.Payload) {
+		t.Error("large payload roundtrip mismatch")
+	}
+}
+
+// ---- Benchmarks -------------------------------------------------------------
+
+func BenchmarkJSONCodec_Encode(b *testing.B) {
+	frame := wspulse.Frame{
+		ID:      "bench-1",
+		Type:    "msg",
+		Payload: []byte(`{"user":"alice","text":"hello"}`),
+	}
+	b.ReportAllocs()
+	for b.Loop() {
+		_, _ = wspulse.JSONCodec.Encode(frame)
+	}
+}
+
+func BenchmarkJSONCodec_Decode(b *testing.B) {
+	data := []byte(`{"id":"bench-1","type":"msg","payload":{"user":"alice","text":"hello"}}`)
+	b.ReportAllocs()
+	for b.Loop() {
+		_, _ = wspulse.JSONCodec.Decode(data)
+	}
+}
+
+func BenchmarkJSONCodec_Roundtrip(b *testing.B) {
+	frame := wspulse.Frame{
+		ID:      "bench-rt",
+		Type:    "msg",
+		Payload: []byte(`{"user":"alice","text":"hello"}`),
+	}
+	b.ReportAllocs()
+	for b.Loop() {
+		data, _ := wspulse.JSONCodec.Encode(frame)
+		_, _ = wspulse.JSONCodec.Decode(data)
+	}
+}
+
+// ---- Helpers ----------------------------------------------------------------
 
 func assertJSONString(t *testing.T, m map[string]json.RawMessage, key, want string) {
 	t.Helper()

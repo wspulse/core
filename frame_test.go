@@ -2,6 +2,8 @@ package wspulse_test
 
 import (
 	"encoding/json"
+	"errors"
+	"strings"
 	"testing"
 
 	wspulse "github.com/wspulse/core"
@@ -84,5 +86,73 @@ func TestWireFrame_EmptyPayload_OmittedFromJSON(t *testing.T) {
 	}
 	if _, ok := m["payload"]; ok {
 		t.Error("expected 'payload' to be absent when Payload is nil")
+	}
+}
+
+// ---- Sentinel error conventions ---------------------------------------------
+
+func TestSentinelErrors_HaveWspulsePrefix(t *testing.T) {
+	cases := []struct {
+		name string
+		err  error
+	}{
+		{"ErrConnectionClosed", wspulse.ErrConnectionClosed},
+		{"ErrSendBufferFull", wspulse.ErrSendBufferFull},
+	}
+	for _, tc := range cases {
+		if !strings.HasPrefix(tc.err.Error(), "wspulse:") {
+			t.Errorf("%s.Error() = %q, want prefix %q", tc.name, tc.err.Error(), "wspulse:")
+		}
+	}
+}
+
+func TestSentinelErrors_SupportErrorsIs(t *testing.T) {
+	wrapped := errors.Join(
+		wspulse.ErrConnectionClosed,
+		errors.New("extra context"),
+	)
+	if !errors.Is(wrapped, wspulse.ErrConnectionClosed) {
+		t.Error("errors.Is should match ErrConnectionClosed in joined error")
+	}
+}
+
+// ---- Frame copy semantics (lifecycle awareness) -----------------------------
+
+func TestFrame_PayloadSharing_AfterCopy(t *testing.T) {
+	original := wspulse.Frame{
+		ID:      "orig",
+		Type:    "msg",
+		Payload: []byte(`{"data":"original"}`),
+	}
+	copied := original
+
+	// Mutate the copied frame's Payload in-place.
+	copied.Payload[0] = 'X'
+
+	// Since slices share backing arrays, the original is also affected.
+	// This test documents the expected Go behavior so users are aware.
+	if original.Payload[0] != 'X' {
+		t.Error("expected shallow copy: modifying copy's Payload should affect original")
+	}
+}
+
+func TestFrame_IndependentPayload_RequiresExplicitCopy(t *testing.T) {
+	original := wspulse.Frame{
+		ID:      "orig",
+		Type:    "msg",
+		Payload: []byte(`{"data":"safe"}`),
+	}
+
+	// Proper deep copy pattern for Frame.
+	independent := wspulse.Frame{
+		ID:   original.ID,
+		Type: original.Type,
+	}
+	independent.Payload = make([]byte, len(original.Payload))
+	copy(independent.Payload, original.Payload)
+
+	independent.Payload[0] = 'X'
+	if original.Payload[0] == 'X' {
+		t.Error("explicit copy should make Payload independent")
 	}
 }
