@@ -24,7 +24,7 @@ import wspulse "github.com/wspulse/core"
 // Create a frame
 frame := wspulse.Frame{
     ID:      "msg-001",
-    Type:    "msg",
+    Event:    "msg",
     Payload: []byte(`{"text":"hello"}`),
 }
 
@@ -70,6 +70,76 @@ if errors.Is(err, wspulse.ErrSendBufferFull) {
 | `BinaryMessage`       | WebSocket binary frame type constant (`2`)                      |
 | `ErrConnectionClosed` | Sentinel: connection is closed                                  |
 | `ErrSendBufferFull`   | Sentinel: send buffer full, frame dropped                       |
+
+---
+
+## Packages
+
+### `github.com/wspulse/core` (root)
+
+Core shared types used across the wspulse ecosystem.
+
+### `github.com/wspulse/core/router`
+
+Gin-style event router for dispatching incoming `wspulse.Frame` values to registered handlers. Features global middleware, per-event handler chains, a configurable fallback for unmatched frames, and a built-in `Recovery()` middleware.
+
+#### Routing key — the `"event"` JSON field
+
+Every frame is encoded on the wire as a JSON object. The `"event"` field is what the router uses to select the handler:
+
+```json
+{
+  "id": "msg-001",
+  "event": "chat.message",
+  "payload": { "text": "hello" }
+}
+```
+
+`frame.Event` on the Go side maps directly to `"event"` in JSON. Register handlers with `r.On("chat.message", ...)` to match that value. The parameter is named `frameType` in `On()` to make this correspondence explicit.
+
+#### Usage
+
+```go
+import (
+    wspulse "github.com/wspulse/core"
+    "github.com/wspulse/core/router"
+)
+
+r := router.New()
+
+// Global middleware — runs before every handler
+r.Use(router.Recovery())
+r.Use(func(c *router.Context) {
+    // authenticate, rate-limit, set metadata …
+    c.Set("userID", authenticate(c.Connection))
+    c.Next()
+})
+
+// Per-event handlers — matched against frame.Event ("event" in JSON)
+r.On("chat.message", func(c *router.Context) {
+    userID := c.GetString("userID")
+    _ = c.Connection.Send(wspulse.Frame{
+        Event:    "chat.ack",
+        Payload: []byte(`{"ok":true,"from":"`+userID+`"}`),
+    })
+})
+r.On("ping", func(c *router.Context) {
+    _ = c.Connection.Send(wspulse.Frame{Event: "pong"})
+})
+
+// Dispatch — call this from WithOnMessage in wspulse/server
+r.Dispatch(connection, frame)
+```
+
+Key properties:
+
+- Routing key is `frame.Event`, which maps to the `"event"` field in the JSON wire format
+- `Context.Next()` / `Abort()` / `IsAborted()` flow control (same as Gin)
+- `Context.Set` / `Get` / `MustGet` / `GetString` typed key-value metadata
+- `sync.Pool`-backed Context recycling — **0 allocations per dispatch**
+- Lazy chain building: `Use` or `On` can be called in any order before the first `Dispatch`
+- Panics at startup on empty event name or duplicate registration
+- Max chain length: 62 handlers (middleware + route handlers combined)
 
 ---
 

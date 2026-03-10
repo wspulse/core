@@ -17,7 +17,7 @@ func TestJSONCodec_FrameType_IsTextMessage(t *testing.T) {
 }
 
 func TestJSONCodec_Encode_ProducesValidJSON(t *testing.T) {
-	f := wspulse.Frame{ID: "1", Type: "msg", Payload: []byte(`{"text":"hello"}`)}
+	f := wspulse.Frame{ID: "1", Event: "msg", Payload: []byte(`{"text":"hello"}`)}
 	data, err := wspulse.JSONCodec.Encode(f)
 	if err != nil {
 		t.Fatalf("Encode failed: %v", err)
@@ -29,19 +29,19 @@ func TestJSONCodec_Encode_ProducesValidJSON(t *testing.T) {
 }
 
 func TestJSONCodec_Encode_PopulatesAllFields(t *testing.T) {
-	f := wspulse.Frame{ID: "abc", Type: "sys", Payload: []byte(`{"x":1}`)}
+	f := wspulse.Frame{ID: "abc", Event: "sys", Payload: []byte(`{"x":1}`)}
 	data, _ := wspulse.JSONCodec.Encode(f)
 	var m map[string]json.RawMessage
 	_ = json.Unmarshal(data, &m)
 	assertJSONString(t, m, "id", "abc")
-	assertJSONString(t, m, "type", "sys")
+	assertJSONString(t, m, "event", "sys")
 	if _, ok := m["payload"]; !ok {
 		t.Error("expected 'payload' key in encoded JSON")
 	}
 }
 
 func TestJSONCodec_Encode_EmptyIDOmitted(t *testing.T) {
-	f := wspulse.Frame{Type: "msg", Payload: []byte(`"data"`)}
+	f := wspulse.Frame{Event: "msg", Payload: []byte(`"data"`)}
 	data, _ := wspulse.JSONCodec.Encode(f)
 	if bytes.Contains(data, []byte(`"id"`)) {
 		t.Error("expected 'id' key to be omitted when ID is empty")
@@ -51,14 +51,14 @@ func TestJSONCodec_Encode_EmptyIDOmitted(t *testing.T) {
 func TestJSONCodec_Encode_EmptyTypeOmitted(t *testing.T) {
 	f := wspulse.Frame{ID: "1", Payload: []byte(`"data"`)}
 	data, _ := wspulse.JSONCodec.Encode(f)
-	if bytes.Contains(data, []byte(`"type"`)) {
+	if bytes.Contains(data, []byte(`"event"`)) {
 		t.Error("expected 'type' key to be omitted when Type is empty")
 	}
 }
 
 func TestJSONCodec_Encode_PayloadIsNotBase64(t *testing.T) {
 	payload := []byte(`{"nested":{"k":"v"}}`)
-	f := wspulse.Frame{Type: "msg", Payload: payload}
+	f := wspulse.Frame{Event: "msg", Payload: payload}
 	data, _ := wspulse.JSONCodec.Encode(f)
 	if !bytes.Contains(data, []byte(`"nested"`)) {
 		t.Errorf("encoded JSON should embed payload as-is, got: %s", data)
@@ -66,7 +66,7 @@ func TestJSONCodec_Encode_PayloadIsNotBase64(t *testing.T) {
 }
 
 func TestJSONCodec_Decode_AllFields(t *testing.T) {
-	input := `{"id":"x","type":"sys","payload":{"event":"join"}}`
+	input := `{"id":"x","event":"sys","payload":{"event":"join"}}`
 	f, err := wspulse.JSONCodec.Decode([]byte(input))
 	if err != nil {
 		t.Fatalf("Decode failed: %v", err)
@@ -74,8 +74,8 @@ func TestJSONCodec_Decode_AllFields(t *testing.T) {
 	if f.ID != "x" {
 		t.Errorf("ID: want %q, got %q", "x", f.ID)
 	}
-	if f.Type != "sys" {
-		t.Errorf("Type: want %q, got %q", "sys", f.Type)
+	if f.Event != "sys" {
+		t.Errorf("Event: want %q, got %q", "sys", f.Event)
 	}
 	if !bytes.Contains(f.Payload, []byte(`"event"`)) {
 		t.Errorf("Payload missing 'event' key: %s", f.Payload)
@@ -87,8 +87,8 @@ func TestJSONCodec_Decode_MissingFieldsAreEmpty(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Decode failed: %v", err)
 	}
-	if f.ID != "" || f.Type != "" {
-		t.Errorf("unexpected non-empty fields: ID=%q Type=%q", f.ID, f.Type)
+	if f.ID != "" || f.Event != "" {
+		t.Errorf("unexpected non-empty fields: ID=%q Type=%q", f.ID, f.Event)
 	}
 }
 
@@ -109,7 +109,7 @@ func TestJSONCodec_Decode_EmptyInput_ReturnsError(t *testing.T) {
 func TestJSONCodec_Roundtrip_PreservesAllFields(t *testing.T) {
 	original := wspulse.Frame{
 		ID:      "round-1",
-		Type:    "msg",
+		Event:   "msg",
 		Payload: []byte(`{"a":1,"b":true}`),
 	}
 	data, err := wspulse.JSONCodec.Encode(original)
@@ -123,8 +123,8 @@ func TestJSONCodec_Roundtrip_PreservesAllFields(t *testing.T) {
 	if decoded.ID != original.ID {
 		t.Errorf("ID: want %q, got %q", original.ID, decoded.ID)
 	}
-	if decoded.Type != original.Type {
-		t.Errorf("Type: want %q, got %q", original.Type, decoded.Type)
+	if decoded.Event != original.Event {
+		t.Errorf("Event: want %q, got %q", original.Event, decoded.Event)
 	}
 	if !bytes.Equal(decoded.Payload, original.Payload) {
 		t.Errorf("Payload: want %s, got %s", original.Payload, decoded.Payload)
@@ -132,13 +132,13 @@ func TestJSONCodec_Roundtrip_PreservesAllFields(t *testing.T) {
 }
 
 func TestJSONCodec_Roundtrip_NilPayload(t *testing.T) {
-	original := wspulse.Frame{ID: "no-payload", Type: "ping"}
+	original := wspulse.Frame{ID: "no-payload", Event: "ping"}
 	data, _ := wspulse.JSONCodec.Encode(original)
 	decoded, err := wspulse.JSONCodec.Decode(data)
 	if err != nil {
 		t.Fatalf("Decode failed: %v", err)
 	}
-	if decoded.ID != original.ID || decoded.Type != original.Type {
+	if decoded.ID != original.ID || decoded.Event != original.Event {
 		t.Errorf("fields changed: got %+v", decoded)
 	}
 }
@@ -146,7 +146,7 @@ func TestJSONCodec_Roundtrip_NilPayload(t *testing.T) {
 // ---- Lifecycle: buffer independence -----------------------------------------
 
 func TestJSONCodec_Decode_PayloadIsIndependentFromInput(t *testing.T) {
-	input := []byte(`{"type":"msg","payload":{"key":"value"}}`)
+	input := []byte(`{"event":"msg","payload":{"key":"value"}}`)
 	original := make([]byte, len(input))
 	copy(original, input)
 
@@ -168,7 +168,7 @@ func TestJSONCodec_Decode_PayloadIsIndependentFromInput(t *testing.T) {
 
 func TestJSONCodec_Encode_OutputIsIndependentFromInput(t *testing.T) {
 	payload := []byte(`{"mutable":"yes"}`)
-	frame := wspulse.Frame{Type: "msg", Payload: payload}
+	frame := wspulse.Frame{Event: "msg", Payload: payload}
 
 	data, err := wspulse.JSONCodec.Encode(frame)
 	if err != nil {
@@ -191,7 +191,7 @@ func TestJSONCodec_Encode_OutputIsIndependentFromInput(t *testing.T) {
 // ---- Edge cases: Payload variants -------------------------------------------
 
 func TestJSONCodec_Encode_InvalidPayload_ReturnsError(t *testing.T) {
-	frame := wspulse.Frame{Type: "msg", Payload: []byte("not valid json")}
+	frame := wspulse.Frame{Event: "msg", Payload: []byte("not valid json")}
 	_, err := wspulse.JSONCodec.Encode(frame)
 	if err == nil {
 		t.Error("expected error when Payload is not valid JSON")
@@ -199,7 +199,7 @@ func TestJSONCodec_Encode_InvalidPayload_ReturnsError(t *testing.T) {
 }
 
 func TestJSONCodec_Roundtrip_NullPayload(t *testing.T) {
-	original := wspulse.Frame{Type: "msg", Payload: []byte("null")}
+	original := wspulse.Frame{Event: "msg", Payload: []byte("null")}
 	data, err := wspulse.JSONCodec.Encode(original)
 	if err != nil {
 		t.Fatalf("Encode failed: %v", err)
@@ -214,7 +214,7 @@ func TestJSONCodec_Roundtrip_NullPayload(t *testing.T) {
 }
 
 func TestJSONCodec_Roundtrip_ArrayPayload(t *testing.T) {
-	original := wspulse.Frame{Type: "list", Payload: []byte(`[1,2,3]`)}
+	original := wspulse.Frame{Event: "list", Payload: []byte(`[1,2,3]`)}
 	data, _ := wspulse.JSONCodec.Encode(original)
 	decoded, err := wspulse.JSONCodec.Decode(data)
 	if err != nil {
@@ -226,7 +226,7 @@ func TestJSONCodec_Roundtrip_ArrayPayload(t *testing.T) {
 }
 
 func TestJSONCodec_Roundtrip_StringPayload(t *testing.T) {
-	original := wspulse.Frame{Type: "echo", Payload: []byte(`"hello world"`)}
+	original := wspulse.Frame{Event: "echo", Payload: []byte(`"hello world"`)}
 	data, _ := wspulse.JSONCodec.Encode(original)
 	decoded, err := wspulse.JSONCodec.Decode(data)
 	if err != nil {
@@ -238,7 +238,7 @@ func TestJSONCodec_Roundtrip_StringPayload(t *testing.T) {
 }
 
 func TestJSONCodec_Roundtrip_NumericPayload(t *testing.T) {
-	original := wspulse.Frame{Type: "val", Payload: []byte(`42`)}
+	original := wspulse.Frame{Event: "val", Payload: []byte(`42`)}
 	data, _ := wspulse.JSONCodec.Encode(original)
 	decoded, err := wspulse.JSONCodec.Decode(data)
 	if err != nil {
@@ -251,7 +251,7 @@ func TestJSONCodec_Roundtrip_NumericPayload(t *testing.T) {
 
 func TestJSONCodec_Roundtrip_UnicodePayload(t *testing.T) {
 	original := wspulse.Frame{
-		Type:    "msg",
+		Event:   "msg",
 		Payload: []byte(`{"text":"你好世界 🌍"}`),
 	}
 	data, err := wspulse.JSONCodec.Encode(original)
@@ -269,7 +269,7 @@ func TestJSONCodec_Roundtrip_UnicodePayload(t *testing.T) {
 
 func TestJSONCodec_Roundtrip_DeeplyNestedPayload(t *testing.T) {
 	original := wspulse.Frame{
-		Type:    "nested",
+		Event:   "nested",
 		Payload: []byte(`{"a":{"b":{"c":{"d":"deep"}}}}`),
 	}
 	data, _ := wspulse.JSONCodec.Encode(original)
@@ -285,18 +285,18 @@ func TestJSONCodec_Roundtrip_DeeplyNestedPayload(t *testing.T) {
 // ---- Forward compatibility: unknown fields ----------------------------------
 
 func TestJSONCodec_Decode_ExtraFields_Ignored(t *testing.T) {
-	input := `{"id":"1","type":"msg","payload":{"k":"v"},"version":2,"extra":"ignored"}`
+	input := `{"id":"1","event":"msg","payload":{"k":"v"},"version":2,"extra":"ignored"}`
 	frame, err := wspulse.JSONCodec.Decode([]byte(input))
 	if err != nil {
 		t.Fatalf("Decode failed: %v", err)
 	}
-	if frame.ID != "1" || frame.Type != "msg" {
+	if frame.ID != "1" || frame.Event != "msg" {
 		t.Errorf("unexpected field values: %+v", frame)
 	}
 }
 
 func TestJSONCodec_Decode_NullPayloadField(t *testing.T) {
-	input := `{"type":"ping","payload":null}`
+	input := `{"event":"ping","payload":null}`
 	frame, err := wspulse.JSONCodec.Decode([]byte(input))
 	if err != nil {
 		t.Fatalf("Decode failed: %v", err)
@@ -319,7 +319,7 @@ func TestJSONCodec_ConcurrentEncodeDecode(t *testing.T) {
 
 			original := wspulse.Frame{
 				ID:      "concurrent",
-				Type:    "msg",
+				Event:   "msg",
 				Payload: []byte(`{"data":"test"}`),
 			}
 			data, err := wspulse.JSONCodec.Encode(original)
@@ -332,7 +332,7 @@ func TestJSONCodec_ConcurrentEncodeDecode(t *testing.T) {
 				t.Errorf("Decode failed: %v", err)
 				return
 			}
-			if decoded.ID != original.ID || decoded.Type != original.Type {
+			if decoded.ID != original.ID || decoded.Event != original.Event {
 				t.Errorf("roundtrip mismatch: got %+v", decoded)
 			}
 		}()
@@ -346,7 +346,7 @@ func TestJSONCodec_Roundtrip_LargePayload(t *testing.T) {
 	// Build a ~10 KB JSON payload.
 	value := strings.Repeat("x", 10000)
 	payload, _ := json.Marshal(map[string]string{"big": value})
-	original := wspulse.Frame{Type: "bulk", Payload: payload}
+	original := wspulse.Frame{Event: "bulk", Payload: payload}
 
 	data, err := wspulse.JSONCodec.Encode(original)
 	if err != nil {
@@ -366,7 +366,7 @@ func TestJSONCodec_Roundtrip_LargePayload(t *testing.T) {
 func BenchmarkJSONCodec_Encode(b *testing.B) {
 	frame := wspulse.Frame{
 		ID:      "bench-1",
-		Type:    "msg",
+		Event:   "msg",
 		Payload: []byte(`{"user":"alice","text":"hello"}`),
 	}
 	b.ReportAllocs()
@@ -376,7 +376,7 @@ func BenchmarkJSONCodec_Encode(b *testing.B) {
 }
 
 func BenchmarkJSONCodec_Decode(b *testing.B) {
-	data := []byte(`{"id":"bench-1","type":"msg","payload":{"user":"alice","text":"hello"}}`)
+	data := []byte(`{"id":"bench-1","event":"msg","payload":{"user":"alice","text":"hello"}}`)
 	b.ReportAllocs()
 	for b.Loop() {
 		_, _ = wspulse.JSONCodec.Decode(data)
@@ -386,7 +386,7 @@ func BenchmarkJSONCodec_Decode(b *testing.B) {
 func BenchmarkJSONCodec_Roundtrip(b *testing.B) {
 	frame := wspulse.Frame{
 		ID:      "bench-rt",
-		Type:    "msg",
+		Event:   "msg",
 		Payload: []byte(`{"user":"alice","text":"hello"}`),
 	}
 	b.ReportAllocs()

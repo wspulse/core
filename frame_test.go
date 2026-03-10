@@ -14,8 +14,8 @@ func TestFrame_ZeroValue_HasEmptyFields(t *testing.T) {
 	if f.ID != "" {
 		t.Errorf("ID: want empty, got %q", f.ID)
 	}
-	if f.Type != "" {
-		t.Errorf("Type: want empty, got %q", f.Type)
+	if f.Event != "" {
+		t.Errorf("Event: want empty, got %q", f.Event)
 	}
 	if f.Payload != nil {
 		t.Errorf("Payload: want nil, got %v", f.Payload)
@@ -24,12 +24,12 @@ func TestFrame_ZeroValue_HasEmptyFields(t *testing.T) {
 
 func TestFrame_FieldAssignment(t *testing.T) {
 	payload := []byte(`{"key":"val"}`)
-	f := wspulse.Frame{ID: "abc", Type: "msg", Payload: payload}
+	f := wspulse.Frame{ID: "abc", Event: "msg", Payload: payload}
 	if f.ID != "abc" {
 		t.Errorf("ID: want %q, got %q", "abc", f.ID)
 	}
-	if f.Type != "msg" {
-		t.Errorf("Type: want %q, got %q", "msg", f.Type)
+	if f.Event != "msg" {
+		t.Errorf("Event: want %q, got %q", "msg", f.Event)
 	}
 	if string(f.Payload) != string(payload) {
 		t.Errorf("Payload: want %s, got %s", payload, f.Payload)
@@ -75,7 +75,7 @@ func TestMessageTypeConstants(t *testing.T) {
 }
 
 func TestWireFrame_EmptyPayload_OmittedFromJSON(t *testing.T) {
-	f := wspulse.Frame{Type: "ping"}
+	f := wspulse.Frame{Event: "ping"}
 	data, err := wspulse.JSONCodec.Encode(f)
 	if err != nil {
 		t.Fatalf("Encode failed: %v", err)
@@ -121,7 +121,7 @@ func TestSentinelErrors_SupportErrorsIs(t *testing.T) {
 func TestFrame_PayloadSharing_AfterCopy(t *testing.T) {
 	original := wspulse.Frame{
 		ID:      "orig",
-		Type:    "msg",
+		Event:   "msg",
 		Payload: []byte(`{"data":"original"}`),
 	}
 	copied := original
@@ -139,14 +139,14 @@ func TestFrame_PayloadSharing_AfterCopy(t *testing.T) {
 func TestFrame_IndependentPayload_RequiresExplicitCopy(t *testing.T) {
 	original := wspulse.Frame{
 		ID:      "orig",
-		Type:    "msg",
+		Event:   "msg",
 		Payload: []byte(`{"data":"safe"}`),
 	}
 
 	// Proper deep copy pattern for Frame.
 	independent := wspulse.Frame{
-		ID:   original.ID,
-		Type: original.Type,
+		ID:    original.ID,
+		Event: original.Event,
 	}
 	independent.Payload = make([]byte, len(original.Payload))
 	copy(independent.Payload, original.Payload)

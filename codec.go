@@ -19,7 +19,7 @@ type Codec interface {
 // Payload is treated as json.RawMessage to avoid base64 encoding.
 type wireFrame struct {
 	ID      string          `json:"id,omitempty"`
-	Type    string          `json:"type,omitempty"`
+	Event   string          `json:"event,omitempty"`
 	Payload json.RawMessage `json:"payload,omitempty"`
 }
 
@@ -36,7 +36,7 @@ func (jsonCodec) FrameType() int { return TextMessage }
 func (jsonCodec) Encode(f Frame) ([]byte, error) {
 	return json.Marshal(wireFrame{
 		ID:      f.ID,
-		Type:    f.Type,
+		Event:   f.Event,
 		Payload: json.RawMessage(f.Payload),
 	})
 }
@@ -48,7 +48,7 @@ func (jsonCodec) Decode(data []byte) (Frame, error) {
 	}
 	return Frame{
 		ID:      wf.ID,
-		Type:    wf.Type,
+		Event:   wf.Event,
 		Payload: []byte(wf.Payload),
 	}, nil
 }
