@@ -15,6 +15,10 @@ making any changes.
 
 - `frame.go` — `Frame` struct, message type constants, sentinel errors
 - `codec.go` — `Codec` interface, `JSONCodec` implementation
+- `router/router.go` — `Router`, `Use`, `On`, `Dispatch`
+- `router/context.go` — `Context`, `HandlerFunc`, `HandlersChain`, `abortIndex`
+- `router/conn.go` — `Connection` interface
+- `router/recovery.go` — `Recovery()` middleware
 
 **Pre-commit gate**: `make check` (fmt → lint → test)
 
