@@ -70,9 +70,9 @@ make tidy       # tidy module dependencies
 8. **Accuracy** — if you have questions or need clarification, ask the user. Do not make assumptions without confirming.
 9. **Language consistency** — when the user writes in Traditional Chinese, respond in Traditional Chinese; otherwise respond in English.
 10. **Panic policy — fail early, never at steady-state runtime** — Enforce errors at the earliest possible phase:
-11. Prefer compile-time enforcement via the type system.
-12. **Setup-time programmer errors** (nil handler, empty event name, duplicate registration, invalid option): `panic`. These indicate a caller logic bug; crashing at startup is correct — the process should never start accepting traffic with a misconfigured router or server.
-13. **Steady-state runtime** (`Dispatch`, `Send`, `Close`, reconnect loops, and any code that runs after startup completes): return `error`, never `panic`.
+    1. Prefer compile-time enforcement via the type system.
+    2. **Setup-time programmer errors** (nil handler, empty event name, duplicate registration, invalid option): `panic`. These indicate a caller logic bug; crashing at startup is correct — the process should never start accepting traffic with a misconfigured router or server.
+    3. **Steady-state runtime** (`Dispatch`, `Send`, `Close`, reconnect loops, and any code that runs after startup completes): return `error`, never `panic`.
 
 ## Session Protocol
 
