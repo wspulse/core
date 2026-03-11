@@ -139,7 +139,7 @@ Key properties:
 - Routing key is `frame.Event`, which maps to the `"event"` field in the JSON wire format
 - `Context.Next()` / `Abort()` / `IsAborted()` flow control (same as Gin)
 - `Context.Set` / `Get` / `MustGet` / `GetString` typed key-value metadata
-- `sync.Pool`-backed Context recycling — **0 steady-state allocations per dispatch**
+- `sync.Pool`-backed Context recycling — **0 steady-state allocations per dispatch** (metadata map allocated once per pooled Context on first `Set`; preserved across pool reuses)
 - Lazy chain building: `Use` or `On` can be called in any order before the first `Dispatch`
 - Panics at startup on empty event name or duplicate registration
 - Max chain length: 62 handlers (middleware + route handlers combined)

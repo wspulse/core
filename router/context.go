@@ -108,5 +108,5 @@ func (c *Context) reset() {
 	c.Frame = wspulse.Frame{}
 	c.handlers = nil
 	c.index = -1
-	c.keys = nil
+	clear(c.keys) // preserve map allocation across pool reuses; no-op when nil
 }

@@ -203,8 +203,12 @@ func (r *Router) combineHandlers(handlers HandlersChain) HandlersChain {
 // defaultFallback is the built-in fallback handler. It logs the unmatched
 // event at WARN level using log/slog (Go 1.21+ stdlib).
 func defaultFallback(c *Context) {
+	var connectionID string
+	if c.Connection != nil {
+		connectionID = c.Connection.ID()
+	}
 	slog.Warn("router: unmatched event",
 		"event", c.Frame.Event,
-		"connectionID", c.Connection.ID(),
+		"connectionID", connectionID,
 	)
 }

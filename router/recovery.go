@@ -19,12 +19,18 @@ import (
 func Recovery() HandlerFunc {
 	return func(c *Context) {
 		defer func() {
+			// In Go 1.21+, panic(nil) causes recover() to return *runtime.PanicNilError
+			// (not nil), so v != nil correctly catches all panics including panic(nil).
 			if v := recover(); v != nil {
+				var connectionID string
+				if c.Connection != nil {
+					connectionID = c.Connection.ID()
+				}
 				slog.Error("router: recovered from panic in handler",
 					"panic", fmt.Sprintf("%v", v),
 					"stack", string(debug.Stack()),
 					"event", c.Frame.Event,
-					"connectionID", c.Connection.ID(),
+					"connectionID", connectionID,
 				)
 			}
 		}()
