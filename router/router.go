@@ -93,24 +93,23 @@ func (r *Router) Use(handlers ...HandlerFunc) {
 			panic(fmt.Sprintf("router: Use: handler at index %d must not be nil", i))
 		}
 	}
-	r.handlers = append(r.handlers, handlers...)
-	// Validate that no chain would reach or exceed maxChainLength after the new
-	// middleware. Check the fallback chain first (+1 for the single fallback handler),
-	// then all registered routes.
-	if len(r.handlers)+1 >= maxChainLength {
+	// Validate lengths before mutating state so a panic leaves the router unchanged.
+	newTotal := len(r.handlers) + len(handlers)
+	if newTotal+1 >= maxChainLength {
 		panic(fmt.Sprintf(
 			"router: Use: handler chain length %d exceeds maximum %d (too many global middleware)",
-			len(r.handlers)+1, maxChainLength-1,
+			newTotal+1, maxChainLength-1,
 		))
 	}
 	for event, routeHandlers := range r.rawRoutes {
-		if len(r.handlers)+len(routeHandlers) >= maxChainLength {
+		if newTotal+len(routeHandlers) >= maxChainLength {
 			panic(fmt.Sprintf(
 				"router: Use: handler chain length %d for event %q would exceed maximum %d",
-				len(r.handlers)+len(routeHandlers), event, maxChainLength-1,
+				newTotal+len(routeHandlers), event, maxChainLength-1,
 			))
 		}
 	}
+	r.handlers = append(r.handlers, handlers...)
 	r.merged.Store(false)
 }
 
