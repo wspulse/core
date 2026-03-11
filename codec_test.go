@@ -88,7 +88,7 @@ func TestJSONCodec_Decode_MissingFieldsAreEmpty(t *testing.T) {
 		t.Fatalf("Decode failed: %v", err)
 	}
 	if f.ID != "" || f.Event != "" {
-		t.Errorf("unexpected non-empty fields: ID=%q Type=%q", f.ID, f.Event)
+		t.Errorf("unexpected non-empty fields: ID=%q Event=%q", f.ID, f.Event)
 	}
 }
 
