@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+---
+
+## [0.2.0] - 2026-03-11
+
 ### Added
 
 - `router` subpackage: Gin-style event routing for wspulse frames
@@ -29,5 +33,6 @@
 - `TextMessage` (1) and `BinaryMessage` (2) WebSocket frame type constants
 - `ErrConnectionClosed` and `ErrSendBufferFull` sentinel errors
 
-[Unreleased]: https://github.com/wspulse/core/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/wspulse/core/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/wspulse/core/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/wspulse/core/releases/tag/v0.1.0
