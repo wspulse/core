@@ -230,6 +230,10 @@ func BenchmarkDispatch(b *testing.B) {
 	conn := newMockConnection("bench-conn", "bench-room")
 	frm := wspulse.Frame{Event: "ping"}
 
+	// Warm up: trigger lazy chain build and initial sync.Pool population so
+	// the benchmark measures steady-state dispatch cost.
+	rtr.Dispatch(conn, frm)
+	b.ResetTimer()
 	b.ReportAllocs()
 	for b.Loop() {
 		rtr.Dispatch(conn, frm)

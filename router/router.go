@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log/slog"
 	"sync"
+	"sync/atomic"
 
 	wspulse "github.com/wspulse/core"
 )
@@ -58,16 +59,16 @@ type Router struct {
 
 	// merged signals that route chains have been built and are ready for dispatch.
 	// Reset to false whenever Use or On is called.
-	merged bool
+	merged atomic.Bool
 
-	// buildMu guards the lazy buildChains call in Dispatch, ensuring at most
-	// one goroutine builds the chains when multiple goroutines first call
-	// Dispatch concurrently.
+	// buildMu guards the lazy buildChains call in Dispatch. The outer atomic
+	// read provides a fast path; the mutex ensures only one goroutine runs
+	// buildChains when merged is false.
 	buildMu sync.Mutex
 }
 
 // New returns a new Router with the provided options applied.
-// The default fallback logs unmatched frame types at WARN level.
+// The default fallback logs unmatched frame events at WARN level.
 func New(opts ...Option) *Router {
 	r := &Router{
 		routes:    make(map[string]HandlersChain),
@@ -93,7 +94,7 @@ func (r *Router) Use(handlers ...HandlerFunc) {
 		}
 	}
 	r.handlers = append(r.handlers, handlers...)
-	r.merged = false
+	r.merged.Store(false)
 }
 
 // On registers one or more handlers for the given Frame.Event value ("event" in
@@ -116,7 +117,7 @@ func (r *Router) On(event string, handlers ...HandlerFunc) {
 		panic(fmt.Sprintf("router: On: duplicate registration for event %q", event))
 	}
 	r.rawRoutes[event] = handlers
-	r.merged = false
+	r.merged.Store(false)
 }
 
 // Dispatch looks up the handler chain for frame.Event and executes it.
@@ -127,11 +128,13 @@ func (r *Router) On(event string, handlers ...HandlerFunc) {
 // routes have been registered. However, calling Use or On while Dispatch is
 // running is not safe.
 func (r *Router) Dispatch(conn Connection, frame wspulse.Frame) {
-	r.buildMu.Lock()
-	if !r.merged {
-		r.buildChains()
+	if !r.merged.Load() {
+		r.buildMu.Lock()
+		if !r.merged.Load() {
+			r.buildChains()
+		}
+		r.buildMu.Unlock()
 	}
-	r.buildMu.Unlock()
 
 	c := r.pool.Get().(*Context)
 	c.reset()
@@ -160,7 +163,7 @@ func (r *Router) buildChains() {
 	// The empty string key is the fallback chain.
 	r.routes[""] = r.combineHandlers(HandlersChain{r.fallback})
 
-	r.merged = true
+	r.merged.Store(true)
 }
 
 // combineHandlers merges the global middleware with the provided handlers into

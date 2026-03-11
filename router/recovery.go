@@ -13,9 +13,9 @@ import (
 //
 // Place Recovery as the first middleware so it wraps the entire chain:
 //
-//	//	r := router.New()
-//	//	r.Use(router.Recovery())
-//	//	r.On("chat.message", handleChat)
+//	r := router.New()
+//	r.Use(router.Recovery())
+//	r.On("chat.message", handleChat)
 func Recovery() HandlerFunc {
 	return func(c *Context) {
 		defer func() {

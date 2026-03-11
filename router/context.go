@@ -25,9 +25,9 @@ type HandlersChain []HandlerFunc
 // a sync.Pool and reset between dispatches; callers must not hold a reference
 // to a Context after the handler returns.
 //
-// All methods are safe to call only from the goroutine that invoked Dispatch.
-// The wspulse readPump guarantees serial delivery per connection, so no
-// synchronization is needed inside a handler chain.
+// Context and its handlers are not concurrency-safe. All methods must be
+// called from the goroutine that performs dispatch, and callers are expected
+// to enforce serial handler execution per logical connection.
 type Context struct {
 	// Connection is the logical WebSocket session that sent the frame.
 	Connection Connection

@@ -188,13 +188,13 @@ func TestContext_Set_OverwritesExistingKey(t *testing.T) {
 }
 
 func TestContext_ConnectionAndFrameAccessible(t *testing.T) {
-	var gotID, gotRoomID, gotFrameType string
+	var gotID, gotRoomID, gotFrameEvent string
 
 	rtr := router.New()
 	rtr.On("chat", func(ctx *router.Context) {
 		gotID = ctx.Connection.ID()
 		gotRoomID = ctx.Connection.RoomID()
-		gotFrameType = ctx.Frame.Event
+		gotFrameEvent = ctx.Frame.Event
 	})
 
 	rtr.Dispatch(
@@ -208,7 +208,7 @@ func TestContext_ConnectionAndFrameAccessible(t *testing.T) {
 	if gotRoomID != "room-A" {
 		t.Errorf("expected RoomID %q, got %q", "room-A", gotRoomID)
 	}
-	if gotFrameType != "chat" {
-		t.Errorf("expected FrameType %q, got %q", "chat", gotFrameType)
+	if gotFrameEvent != "chat" {
+		t.Errorf("expected FrameEvent %q, got %q", "chat", gotFrameEvent)
 	}
 }

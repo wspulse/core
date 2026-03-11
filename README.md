@@ -101,6 +101,8 @@ Every frame is encoded on the wire as a JSON object. The `"event"` field is what
 
 ```go
 import (
+    "encoding/json"
+
     wspulse "github.com/wspulse/core"
     "github.com/wspulse/core/router"
 )
@@ -118,9 +120,10 @@ r.Use(func(c *router.Context) {
 // Per-event handlers — matched against frame.Event ("event" in JSON)
 r.On("chat.message", func(c *router.Context) {
     userID := c.GetString("userID")
+    payload, _ := json.Marshal(map[string]any{"ok": true, "from": userID})
     _ = c.Connection.Send(wspulse.Frame{
-        Event:    "chat.ack",
-        Payload: []byte(`{"ok":true,"from":"`+userID+`"}`),
+        Event:   "chat.ack",
+        Payload: payload,
     })
 })
 r.On("ping", func(c *router.Context) {
@@ -136,7 +139,7 @@ Key properties:
 - Routing key is `frame.Event`, which maps to the `"event"` field in the JSON wire format
 - `Context.Next()` / `Abort()` / `IsAborted()` flow control (same as Gin)
 - `Context.Set` / `Get` / `MustGet` / `GetString` typed key-value metadata
-- `sync.Pool`-backed Context recycling — **0 allocations per dispatch**
+- `sync.Pool`-backed Context recycling — **0 steady-state allocations per dispatch**
 - Lazy chain building: `Use` or `On` can be called in any order before the first `Dispatch`
 - Panics at startup on empty event name or duplicate registration
 - Max chain length: 62 handlers (middleware + route handlers combined)
