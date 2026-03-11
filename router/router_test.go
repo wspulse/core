@@ -88,16 +88,16 @@ func TestRouter_Use_AbortInMiddlewareBlocksHandler(t *testing.T) {
 // ---- WithFallback ------------------------------------------------------------
 
 func TestRouter_WithFallback_CalledForUnregisteredEvent(t *testing.T) {
-	var gotType string
+	var gotEvent string
 
 	rtr := router.New(router.WithFallback(func(ctx *router.Context) {
-		gotType = ctx.Frame.Event
+		gotEvent = ctx.Frame.Event
 	}))
 
 	rtr.Dispatch(newMockConnection("c1", "r1"), wspulse.Frame{Event: "mystery"})
 
-	if gotType != "mystery" {
-		t.Errorf("expected %q, got %q", "mystery", gotType)
+	if gotEvent != "mystery" {
+		t.Errorf("expected %q, got %q", "mystery", gotEvent)
 	}
 }
 
@@ -210,13 +210,13 @@ func TestRouter_CombineHandlers_PanicsWhenChainTooLong(t *testing.T) {
 	}()
 
 	rtr := router.New()
-	// add 63 middleware handlers so that combined with the route handler the
-	// total (64) exceeds maxChainLength (63), triggering a panic in buildChains.
+	// Add enough middleware so that when combined with any single handler the
+	// chain length reaches maxChainLength (63), triggering a panic in Use.
 	for i := 0; i < 63; i++ {
 		rtr.Use(func(ctx *router.Context) { ctx.Next() })
 	}
 	rtr.On("ping", func(_ *router.Context) {})
-	// buildChains is lazy — the panic fires on the first Dispatch call.
+	// Panic fires in Use before On or Dispatch are reached.
 	rtr.Dispatch(newMockConnection("c1", "r1"), wspulse.Frame{Event: "ping"})
 }
 

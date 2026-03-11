@@ -10,8 +10,8 @@ import (
 )
 
 // maxChainLength is the maximum number of handlers that may appear in a single
-// merged chain (global middleware + route handlers). Exceeding this limit
-// causes combineHandlers to panic. Value mirrors abortIndex (63).
+// merged chain (global middleware + route handlers). Reaching or exceeding this
+// limit causes a panic at setup time (in Use or On). Value mirrors abortIndex (63).
 const maxChainLength = int(abortIndex)
 
 // Option is a functional option for configuring a Router.
@@ -94,6 +94,23 @@ func (r *Router) Use(handlers ...HandlerFunc) {
 		}
 	}
 	r.handlers = append(r.handlers, handlers...)
+	// Validate that no chain would reach or exceed maxChainLength after the new
+	// middleware. Check the fallback chain first (+1 for the single fallback handler),
+	// then all registered routes.
+	if len(r.handlers)+1 >= maxChainLength {
+		panic(fmt.Sprintf(
+			"router: Use: handler chain length %d exceeds maximum %d (too many global middleware)",
+			len(r.handlers)+1, maxChainLength-1,
+		))
+	}
+	for event, routeHandlers := range r.rawRoutes {
+		if len(r.handlers)+len(routeHandlers) >= maxChainLength {
+			panic(fmt.Sprintf(
+				"router: Use: handler chain length %d for event %q would exceed maximum %d",
+				len(r.handlers)+len(routeHandlers), event, maxChainLength-1,
+			))
+		}
+	}
 	r.merged.Store(false)
 }
 
@@ -115,6 +132,12 @@ func (r *Router) On(event string, handlers ...HandlerFunc) {
 	}
 	if _, exists := r.rawRoutes[event]; exists {
 		panic(fmt.Sprintf("router: On: duplicate registration for event %q", event))
+	}
+	if len(r.handlers)+len(handlers) >= maxChainLength {
+		panic(fmt.Sprintf(
+			"router: On: handler chain length %d for event %q exceeds maximum %d",
+			len(r.handlers)+len(handlers), event, maxChainLength-1,
+		))
 	}
 	r.rawRoutes[event] = handlers
 	r.merged.Store(false)
@@ -167,16 +190,11 @@ func (r *Router) buildChains() {
 }
 
 // combineHandlers merges the global middleware with the provided handlers into
-// a single chain. Panics if the resulting chain length would reach or exceed
-// maxChainLength (63); the maximum allowed number of handlers is abortIndex-1 (62).
+// a single chain. Chain length is validated eagerly in Use and On;
+// by the time buildChains calls this function the combined length is guaranteed
+// to be within bounds.
 func (r *Router) combineHandlers(handlers HandlersChain) HandlersChain {
 	total := len(r.handlers) + len(handlers)
-	if total >= maxChainLength {
-		panic(fmt.Sprintf(
-			"router: handler chain length %d exceeds maximum %d",
-			total, maxChainLength-1,
-		))
-	}
 	merged := make(HandlersChain, total)
 	copy(merged, r.handlers)
 	copy(merged[len(r.handlers):], handlers)

@@ -48,11 +48,11 @@ func TestJSONCodec_Encode_EmptyIDOmitted(t *testing.T) {
 	}
 }
 
-func TestJSONCodec_Encode_EmptyTypeOmitted(t *testing.T) {
+func TestJSONCodec_Encode_EmptyEventOmitted(t *testing.T) {
 	f := wspulse.Frame{ID: "1", Payload: []byte(`"data"`)}
 	data, _ := wspulse.JSONCodec.Encode(f)
 	if bytes.Contains(data, []byte(`"event"`)) {
-		t.Error("expected 'type' key to be omitted when Type is empty")
+		t.Error("expected 'event' key to be omitted when Event is empty")
 	}
 }
 
