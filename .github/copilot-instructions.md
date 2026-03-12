@@ -40,7 +40,7 @@ make tidy       # tidy module dependencies
     - `bugfix/<name>` — bug fix
     - `fix/<name>` — quick fix (e.g. config, docs, CI)
     - CI triggers on all four branch prefixes and on PRs targeting `main`/`develop`. Tags do **not** trigger CI (the tag is created after CI already passed). Open a PR into `develop`; `develop` requires status checks to pass.
-- **Tests**: co-located with source (`_test.go`). Cover happy path and at least one error path.
+- **Tests**: co-located with source (`_test.go`). Cover happy path and at least one error path. Required for new public functions.
   - **Test-first for bug fixes**: **mandatory** — see Critical Rule 6 for the required step-by-step procedure. Do not touch production code without a prior failing test.
   - **Benchmarks**: changes to encoding or frame allocation must include a benchmark. Verify with `make bench`.
 - **API compatibility**:
@@ -64,10 +64,11 @@ make tidy       # tidy module dependencies
     5. Run `make check` to verify nothing else broke.
     6. If you are about to edit production code and no failing test exists yet — stop and go back to step 1.
 7. **STOP — before every commit, verify this checklist:**
-    1. Run `make check` (fmt → lint → test) and confirm it passes.
-    2. Commit message follows [commit-message-instructions.md](instructions/commit-message-instructions.md): correct type, subject ≤ 50 chars, numbered body items stating reason → change.
-    3. This commit contains exactly one logical change — no unrelated modifications.
-    4. If any item fails — fix it before committing.
+    1. Run `make check` (fmt → lint → test) and confirm it passes. Skip if the commit contains only non-code changes (e.g. documentation, comments, Markdown).
+    2. Run GitHub Copilot code review (`github.copilot.chat.review.changes`) on the working-tree diff and resolve every comment before proceeding.
+    3. Commit message follows [commit-message-instructions.md](instructions/commit-message-instructions.md): correct type, subject ≤ 50 chars, numbered body items stating reason → change.
+    4. This commit contains exactly one logical change — no unrelated modifications.
+    5. If any item fails — fix it before committing.
 8. **Accuracy** — if you have questions or need clarification, ask the user. Do not make assumptions without confirming.
 9. **Language consistency** — when the user writes in Traditional Chinese, respond in Traditional Chinese; otherwise respond in English.
 10. **Panic policy — fail early, never at steady-state runtime** — Enforce errors at the earliest possible phase:
