@@ -15,5 +15,5 @@ on:
       - '.github/instructions/**'
 
 jobs:
-  ci:
-    uses: wspulse/.github/.github/workflows/go-ci.yml@main
+  check:
+    uses: wspulse/.github/.github/workflows/go-check.yml@main
