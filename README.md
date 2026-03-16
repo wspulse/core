@@ -1,5 +1,9 @@
 # wspulse/core
 
+[![CI](https://github.com/wspulse/core/actions/workflows/ci.yml/badge.svg)](https://github.com/wspulse/core/actions/workflows/ci.yml)
+[![Go Reference](https://pkg.go.dev/badge/github.com/wspulse/core.svg)](https://pkg.go.dev/github.com/wspulse/core)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
 Shared types for the [wspulse](https://github.com/wspulse) WebSocket ecosystem.
 
 This module provides `Frame`, `Codec`, `JSONCodec`, and sentinel errors used by both [wspulse/server](https://github.com/wspulse/server) and [wspulse/client-go](https://github.com/wspulse/client-go). It has **zero external dependencies** (Go stdlib only).
