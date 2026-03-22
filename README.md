@@ -172,6 +172,10 @@ make clean      # remove build artifacts and test cache
 
 ---
 
-## License
+## Contract & Protocol
 
-[MIT](LICENSE)
+| Document               | Description                                 |
+| ---------------------- | ------------------------------------------- |
+| [Wire Protocol][proto] | Frame format, heartbeat, session resumption |
+
+[proto]: https://github.com/wspulse/.github/blob/main/doc/protocol.md
