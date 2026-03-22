@@ -169,13 +169,3 @@ make clean      # remove build artifacts and test cache
 
 - [wspulse/server](https://github.com/wspulse/server) — WebSocket server library
 - [wspulse/client-go](https://github.com/wspulse/client-go) — Go WebSocket client with auto-reconnect
-
----
-
-## Contract & Protocol
-
-| Document               | Description                                 |
-| ---------------------- | ------------------------------------------- |
-| [Wire Protocol][proto] | Frame format, heartbeat, session resumption |
-
-[proto]: https://github.com/wspulse/.github/blob/main/doc/protocol.md
