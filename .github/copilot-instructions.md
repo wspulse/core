@@ -49,6 +49,7 @@ make tidy       # tidy module dependencies
   - Adding a method to an exported interface breaks all external implementations — treat it as a breaking change.
   - Mark deprecated symbols with `// Deprecated: use Xxx instead.` before removal.
 - **Error format**: wrap errors as `fmt.Errorf("wspulse: <context>: %w", err)`; define sentinel errors as `errors.New("wspulse: <description>")`.
+- **File encoding**: all files must be UTF-8 without BOM. Do not use any other encoding.
 
 ## Critical Rules
 
