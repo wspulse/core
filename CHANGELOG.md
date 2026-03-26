@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Added
+
+- `CloseSessionExpired` (4100) — WebSocket application-level close code sent when a client requests session resumption but the session no longer exists (grace window expired or server restarted)
+
 ---
 
 ## [0.2.0] - 2026-03-11
