@@ -18,10 +18,6 @@ const (
 // When using JSONCodec (the default), Payload must be valid JSON bytes (e.g. output of
 // json.Marshal). When using a binary codec, Payload is the codec-encoded bytes.
 type Frame struct {
-	// ID uniquely identifies this frame. Used for ACK correlation.
-	// If empty on Send, no ID is set on the wire.
-	ID string
-
 	// Event identifies the frame purpose. wspulse does not interpret this value.
 	// Conventional values: "msg" (user data), "sys" (system event), "ack" (acknowledgement).
 	Event string
