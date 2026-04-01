@@ -94,7 +94,6 @@ Every frame is encoded on the wire as a JSON object. The `"event"` field is what
 
 ```json
 {
-  "id": "msg-001",
   "event": "chat.message",
   "payload": { "text": "hello" }
 }

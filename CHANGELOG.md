@@ -2,7 +2,7 @@
 
 ## [Unreleased]
 
-### Changed
+### Removed
 
 - **BREAKING**: `Frame.ID` field removed — transport layer does not use it. Applications needing message IDs should use Payload.
 
