@@ -3,30 +3,22 @@ package router_test
 import (
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
 	wspulse "github.com/wspulse/core"
 	"github.com/wspulse/core/router"
 )
 
 func TestRecovery_CatchesPanicAndContinues(t *testing.T) {
-	afterRecoveryCalled := false
-
 	rtr := router.New()
 	rtr.Use(router.Recovery())
 	rtr.On("ping", func(_ *router.Context) { panic("boom") })
 
 	// Dispatch must not panic to the caller; it must be swallowed by Recovery.
-	defer func() {
-		if recover() != nil {
-			t.Error("panic escaped Recovery middleware")
-		}
-	}()
-
-	rtr.Dispatch(newMockConnection("c1", "r1"), wspulse.Frame{Event: "ping"})
-	afterRecoveryCalled = true
-
-	if !afterRecoveryCalled {
-		t.Error("execution should continue after Dispatch when Recovery is installed")
-	}
+	require.NotPanics(t, func() {
+		rtr.Dispatch(newMockConnection("c1", "r1"), wspulse.Frame{Event: "ping"})
+	})
 }
 
 func TestRecovery_NonPanicPathUnaffected(t *testing.T) {
@@ -38,9 +30,7 @@ func TestRecovery_NonPanicPathUnaffected(t *testing.T) {
 
 	rtr.Dispatch(newMockConnection("c1", "r1"), wspulse.Frame{Event: "ping"})
 
-	if !called {
-		t.Error("handler should be called when no panic occurs")
-	}
+	assert.True(t, called, "handler should be called when no panic occurs")
 }
 
 func TestRecovery_ChainContinuesAfterRecovery(t *testing.T) {
@@ -55,21 +45,16 @@ func TestRecovery_ChainContinuesAfterRecovery(t *testing.T) {
 
 	rtr.Dispatch(newMockConnection("c1", "r1"), wspulse.Frame{Event: "ping"})
 
-	if !secondCalled {
-		t.Error("subsequent middleware should be called when Recovery is installed and no panic occurs")
-	}
+	assert.True(t, secondCalled,
+		"subsequent middleware should be called when Recovery is installed and no panic occurs")
 }
 
 func TestRecovery_PanicWithNilValue(t *testing.T) {
-	defer func() {
-		if recover() != nil {
-			t.Error("nil panic should not escape Recovery middleware")
-		}
-	}()
-
 	rtr := router.New()
 	rtr.Use(router.Recovery())
 	rtr.On("ping", func(_ *router.Context) { panic(nil) }) //nolint:gocritic
 
-	rtr.Dispatch(newMockConnection("c1", "r1"), wspulse.Frame{Event: "ping"})
+	require.NotPanics(t, func() {
+		rtr.Dispatch(newMockConnection("c1", "r1"), wspulse.Frame{Event: "ping"})
+	})
 }
