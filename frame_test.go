@@ -11,9 +11,6 @@ import (
 
 func TestFrame_ZeroValue_HasEmptyFields(t *testing.T) {
 	var f wspulse.Frame
-	if f.ID != "" {
-		t.Errorf("ID: want empty, got %q", f.ID)
-	}
 	if f.Event != "" {
 		t.Errorf("Event: want empty, got %q", f.Event)
 	}
@@ -24,10 +21,7 @@ func TestFrame_ZeroValue_HasEmptyFields(t *testing.T) {
 
 func TestFrame_FieldAssignment(t *testing.T) {
 	payload := []byte(`{"key":"val"}`)
-	f := wspulse.Frame{ID: "abc", Event: "msg", Payload: payload}
-	if f.ID != "abc" {
-		t.Errorf("ID: want %q, got %q", "abc", f.ID)
-	}
+	f := wspulse.Frame{Event: "msg", Payload: payload}
 	if f.Event != "msg" {
 		t.Errorf("Event: want %q, got %q", "msg", f.Event)
 	}
@@ -120,7 +114,6 @@ func TestSentinelErrors_SupportErrorsIs(t *testing.T) {
 
 func TestFrame_PayloadSharing_AfterCopy(t *testing.T) {
 	original := wspulse.Frame{
-		ID:      "orig",
 		Event:   "msg",
 		Payload: []byte(`{"data":"original"}`),
 	}
@@ -138,14 +131,12 @@ func TestFrame_PayloadSharing_AfterCopy(t *testing.T) {
 
 func TestFrame_IndependentPayload_RequiresExplicitCopy(t *testing.T) {
 	original := wspulse.Frame{
-		ID:      "orig",
 		Event:   "msg",
 		Payload: []byte(`{"data":"safe"}`),
 	}
 
 	// Proper deep copy pattern for Frame.
 	independent := wspulse.Frame{
-		ID:    original.ID,
 		Event: original.Event,
 	}
 	independent.Payload = make([]byte, len(original.Payload))
