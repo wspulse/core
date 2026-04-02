@@ -15,6 +15,7 @@ making any changes.
 
 - `frame.go` — `Frame` struct, message type constants, sentinel errors
 - `codec.go` — `Codec` interface, `JSONCodec` implementation
+- `transport.go` — `Transport` interface (WebSocket connection abstraction)
 - `router/router.go` — `Router`, `Use`, `On`, `Dispatch`
 - `router/context.go` — `Context`, `HandlerFunc`, `HandlersChain`, `abortIndex`
 - `router/conn.go` — `Connection` interface

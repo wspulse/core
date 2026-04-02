@@ -7,9 +7,12 @@ import "time"
 // no wrapper or adapter is needed in production code.
 type Transport interface {
 	// ReadMessage reads a complete message from the connection.
+	// The returned messageType is TextMessage (1) or BinaryMessage (2).
 	ReadMessage() (messageType int, p []byte, err error)
 
 	// WriteMessage writes a complete message to the connection.
+	// messageType should be TextMessage (1) or BinaryMessage (2),
+	// consistent with Codec.FrameType.
 	WriteMessage(messageType int, data []byte) error
 
 	// SetReadLimit sets the maximum size in bytes for a message read

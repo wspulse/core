@@ -7,7 +7,7 @@
 
 Shared types for the [wspulse](https://github.com/wspulse) WebSocket ecosystem.
 
-This module provides `Frame`, `Codec`, `JSONCodec`, and sentinel errors used by both [wspulse/server](https://github.com/wspulse/server) and [wspulse/client-go](https://github.com/wspulse/client-go). It has **zero external dependencies** (Go stdlib only).
+This module provides `Frame`, `Codec`, `JSONCodec`, `Transport`, and sentinel errors used by both [wspulse/server](https://github.com/wspulse/server) and [wspulse/client-go](https://github.com/wspulse/client-go). It has **zero production dependencies** (Go stdlib only).
 
 **Status:** v0 — API is being stabilized. Module path: `github.com/wspulse/core`.
 
@@ -28,8 +28,7 @@ import wspulse "github.com/wspulse/core"
 
 // Create a frame
 frame := wspulse.Frame{
-    ID:      "msg-001",
-    Event:    "msg",
+    Event:   "msg",
     Payload: []byte(`{"text":"hello"}`),
 }
 
@@ -61,20 +60,6 @@ if errors.Is(err, wspulse.ErrSendBufferFull) {
     // outbound buffer full, frame was dropped
 }
 ```
-
----
-
-## Public API
-
-| Symbol                | Description                                                     |
-| --------------------- | --------------------------------------------------------------- |
-| `Frame`               | Transport unit: `ID`, `Event`, `Payload []byte`                 |
-| `Codec`               | Interface: `Encode(Frame)`, `Decode([]byte)`, `FrameType() int` |
-| `JSONCodec`           | Default codec — JSON text frames                                |
-| `TextMessage`         | WebSocket text frame type constant (`1`)                        |
-| `BinaryMessage`       | WebSocket binary frame type constant (`2`)                      |
-| `ErrConnectionClosed` | Sentinel: connection is closed                                  |
-| `ErrSendBufferFull`   | Sentinel: send buffer full, frame dropped                       |
 
 ---
 

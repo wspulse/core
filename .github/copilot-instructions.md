@@ -8,6 +8,7 @@ wspulse/core provides the **shared types** used across the wspulse WebSocket eco
 
 - **`frame.go`** — `Frame` struct (the minimal transport unit), WebSocket message type constants (`TextMessage`, `BinaryMessage`), and shared sentinel errors (`ErrConnectionClosed`, `ErrSendBufferFull`).
 - **`codec.go`** — `Codec` interface (`Encode`, `Decode`, `FrameType`), default `JSONCodec` implementation, and the unexported `wireFrame`/`jsonCodec` types.
+- **`transport.go`** — `Transport` interface abstracting WebSocket connections for testability. `*gorilla/websocket.Conn` satisfies it via duck typing.
 - **`router/`** — Gin-style event router (`Router`, `Context`, `Connection`, `HandlerFunc`, `Recovery`). Dispatches inbound `Frame` values by `Frame.Event` through a global middleware + per-event handler chain. Lazy chain building, `sync.Pool`-backed `Context` recycling, atomic fast path for steady-state dispatches.
 
 ## Development Workflow
