@@ -3,7 +3,7 @@ package wspulse
 import "time"
 
 // Transport abstracts the WebSocket connection for testability.
-// *gorilla/websocket.Conn satisfies this interface via duck typing —
+// gorilla/websocket.Conn satisfies this interface via duck typing —
 // no wrapper or adapter is needed in production code.
 type Transport interface {
 	// ReadMessage reads a complete message from the connection.
