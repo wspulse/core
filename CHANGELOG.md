@@ -2,6 +2,14 @@
 
 ## [Unreleased]
 
+### Added
+
+- `Transport` interface — abstracts WebSocket connection for testability. `*gorilla/websocket.Conn` satisfies it via duck typing.
+
+### Removed
+
+- **BREAKING**: `Frame.ID` field removed — transport layer does not use it. Applications needing message IDs should use Payload.
+
 ---
 
 ## [0.2.0] - 2026-03-11

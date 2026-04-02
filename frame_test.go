@@ -6,34 +6,23 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
 	wspulse "github.com/wspulse/core"
 )
 
 func TestFrame_ZeroValue_HasEmptyFields(t *testing.T) {
 	var f wspulse.Frame
-	if f.ID != "" {
-		t.Errorf("ID: want empty, got %q", f.ID)
-	}
-	if f.Event != "" {
-		t.Errorf("Event: want empty, got %q", f.Event)
-	}
-	if f.Payload != nil {
-		t.Errorf("Payload: want nil, got %v", f.Payload)
-	}
+	assert.Empty(t, f.Event)
+	assert.Nil(t, f.Payload)
 }
 
 func TestFrame_FieldAssignment(t *testing.T) {
 	payload := []byte(`{"key":"val"}`)
-	f := wspulse.Frame{ID: "abc", Event: "msg", Payload: payload}
-	if f.ID != "abc" {
-		t.Errorf("ID: want %q, got %q", "abc", f.ID)
-	}
-	if f.Event != "msg" {
-		t.Errorf("Event: want %q, got %q", "msg", f.Event)
-	}
-	if string(f.Payload) != string(payload) {
-		t.Errorf("Payload: want %s, got %s", payload, f.Payload)
-	}
+	f := wspulse.Frame{Event: "msg", Payload: payload}
+	assert.Equal(t, "msg", f.Event)
+	assert.Equal(t, payload, f.Payload)
 }
 
 func TestSentinelErrors_AreDistinct(t *testing.T) {
@@ -43,8 +32,8 @@ func TestSentinelErrors_AreDistinct(t *testing.T) {
 	}
 	for i, a := range sentinels {
 		for j, b := range sentinels {
-			if i != j && a == b {
-				t.Fatalf("errors[%d] and errors[%d] are the same: %v", i, j, a)
+			if i != j {
+				require.NotEqual(t, a, b, "errors[%d] and errors[%d] should be distinct", i, j)
 			}
 		}
 	}
@@ -59,34 +48,22 @@ func TestSentinelErrors_HaveNonEmptyMessages(t *testing.T) {
 		{"ErrSendBufferFull", wspulse.ErrSendBufferFull},
 	}
 	for _, tc := range cases {
-		if tc.err.Error() == "" {
-			t.Errorf("%s.Error() returned empty string", tc.name)
-		}
+		assert.NotEmpty(t, tc.err.Error(), "%s.Error() returned empty string", tc.name)
 	}
 }
 
 func TestMessageTypeConstants(t *testing.T) {
-	if wspulse.TextMessage != 1 {
-		t.Errorf("TextMessage: want 1, got %d", wspulse.TextMessage)
-	}
-	if wspulse.BinaryMessage != 2 {
-		t.Errorf("BinaryMessage: want 2, got %d", wspulse.BinaryMessage)
-	}
+	assert.Equal(t, 1, wspulse.TextMessage)
+	assert.Equal(t, 2, wspulse.BinaryMessage)
 }
 
 func TestWireFrame_EmptyPayload_OmittedFromJSON(t *testing.T) {
 	f := wspulse.Frame{Event: "ping"}
 	data, err := wspulse.JSONCodec.Encode(f)
-	if err != nil {
-		t.Fatalf("Encode failed: %v", err)
-	}
+	require.NoError(t, err)
 	var m map[string]json.RawMessage
-	if err := json.Unmarshal(data, &m); err != nil {
-		t.Fatalf("unmarshal failed: %v", err)
-	}
-	if _, ok := m["payload"]; ok {
-		t.Error("expected 'payload' to be absent when Payload is nil")
-	}
+	require.NoError(t, json.Unmarshal(data, &m))
+	assert.NotContains(t, m, "payload")
 }
 
 // ---- Sentinel error conventions ---------------------------------------------
@@ -100,9 +77,8 @@ func TestSentinelErrors_HaveWspulsePrefix(t *testing.T) {
 		{"ErrSendBufferFull", wspulse.ErrSendBufferFull},
 	}
 	for _, tc := range cases {
-		if !strings.HasPrefix(tc.err.Error(), "wspulse:") {
-			t.Errorf("%s.Error() = %q, want prefix %q", tc.name, tc.err.Error(), "wspulse:")
-		}
+		assert.True(t, strings.HasPrefix(tc.err.Error(), "wspulse:"),
+			"%s.Error() = %q, want prefix %q", tc.name, tc.err.Error(), "wspulse:")
 	}
 }
 
@@ -111,16 +87,13 @@ func TestSentinelErrors_SupportErrorsIs(t *testing.T) {
 		wspulse.ErrConnectionClosed,
 		errors.New("extra context"),
 	)
-	if !errors.Is(wrapped, wspulse.ErrConnectionClosed) {
-		t.Error("errors.Is should match ErrConnectionClosed in joined error")
-	}
+	assert.ErrorIs(t, wrapped, wspulse.ErrConnectionClosed)
 }
 
 // ---- Frame copy semantics (lifecycle awareness) -----------------------------
 
 func TestFrame_PayloadSharing_AfterCopy(t *testing.T) {
 	original := wspulse.Frame{
-		ID:      "orig",
 		Event:   "msg",
 		Payload: []byte(`{"data":"original"}`),
 	}
@@ -131,28 +104,24 @@ func TestFrame_PayloadSharing_AfterCopy(t *testing.T) {
 
 	// Since slices share backing arrays, the original is also affected.
 	// This test documents the expected Go behavior so users are aware.
-	if original.Payload[0] != 'X' {
-		t.Error("expected shallow copy: modifying copy's Payload should affect original")
-	}
+	assert.Equal(t, byte('X'), original.Payload[0],
+		"expected shallow copy: modifying copy's Payload should affect original")
 }
 
 func TestFrame_IndependentPayload_RequiresExplicitCopy(t *testing.T) {
 	original := wspulse.Frame{
-		ID:      "orig",
 		Event:   "msg",
 		Payload: []byte(`{"data":"safe"}`),
 	}
 
 	// Proper deep copy pattern for Frame.
 	independent := wspulse.Frame{
-		ID:    original.ID,
 		Event: original.Event,
 	}
 	independent.Payload = make([]byte, len(original.Payload))
 	copy(independent.Payload, original.Payload)
 
 	independent.Payload[0] = 'X'
-	if original.Payload[0] == 'X' {
-		t.Error("explicit copy should make Payload independent")
-	}
+	assert.NotEqual(t, byte('X'), original.Payload[0],
+		"explicit copy should make Payload independent")
 }
