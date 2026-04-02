@@ -2,12 +2,13 @@
 
 ## Project Overview
 
-wspulse/core provides the **shared types** used across the wspulse WebSocket ecosystem: `Frame`, `Codec`, `JSONCodec`, and sentinel errors. Module path: `github.com/wspulse/core`. Package name: `wspulse`. This module has **zero production dependencies** (stdlib only). Test dependencies (e.g. `testify`) are permitted with justification.
+wspulse/core provides the **shared types** used across the wspulse WebSocket ecosystem: `Frame`, `Codec`, `JSONCodec`, `Transport`, and sentinel errors. Module path: `github.com/wspulse/core`. Package name: `wspulse`. This module has **zero production dependencies** (stdlib only). Test dependencies (e.g. `testify`) are permitted with justification.
 
 ## Architecture
 
 - **`frame.go`** — `Frame` struct (the minimal transport unit), WebSocket message type constants (`TextMessage`, `BinaryMessage`), and shared sentinel errors (`ErrConnectionClosed`, `ErrSendBufferFull`).
 - **`codec.go`** — `Codec` interface (`Encode`, `Decode`, `FrameType`), default `JSONCodec` implementation, and the unexported `wireFrame`/`jsonCodec` types.
+- **`transport.go`** — `Transport` interface abstracting WebSocket connections for testability. `*gorilla/websocket.Conn` satisfies it via duck typing.
 - **`router/`** — Gin-style event router (`Router`, `Context`, `Connection`, `HandlerFunc`, `Recovery`). Dispatches inbound `Frame` values by `Frame.Event` through a global middleware + per-event handler chain. Lazy chain building, `sync.Pool`-backed `Context` recycling, atomic fast path for steady-state dispatches.
 
 ## Development Workflow
