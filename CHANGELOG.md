@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+---
+
+## [0.3.0] - 2026-04-02
+
 ### Added
 
 - `Transport` interface — abstracts WebSocket connection for testability. `*gorilla/websocket.Conn` satisfies it via duck typing.
