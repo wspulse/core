@@ -56,9 +56,9 @@ wspulse/core follows semantic versioning. Any change that removes, renames, or a
 - Adding a method to an exported interface is also a breaking change.
 - When in doubt, add a new symbol alongside the old one.
 
-## Zero Dependencies
+## Dependencies
 
-core must have **zero external dependencies**. It may only use the Go standard library. Any PR that introduces an external dependency will be rejected.
+core must have **zero production dependencies** — production code may only use the Go standard library. Test dependencies (`_test.go` only) are permitted when justified (e.g. `testify` for assertion readability). Any PR that introduces a production dependency will be rejected.
 
 ## Pull Request Guidelines
 
