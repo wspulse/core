@@ -3,6 +3,9 @@ package router_test
 import (
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
 	wspulse "github.com/wspulse/core"
 	"github.com/wspulse/core/router"
 )
@@ -17,9 +20,7 @@ func TestContext_Next_ExecutesAllHandlersInOrder(t *testing.T) {
 
 	rtr.Dispatch(newMockConnection("c1", "room1"), wspulse.Frame{Event: "ping"})
 
-	if len(order) != 3 || order[0] != 1 || order[1] != 2 || order[2] != 3 {
-		t.Errorf("unexpected execution order: %v", order)
-	}
+	assert.Equal(t, []int{1, 2, 3}, order)
 }
 
 func TestContext_Abort_StopsChain(t *testing.T) {
@@ -31,9 +32,7 @@ func TestContext_Abort_StopsChain(t *testing.T) {
 
 	rtr.Dispatch(newMockConnection("c1", "room1"), wspulse.Frame{Event: "ping"})
 
-	if secondCalled {
-		t.Error("handler should not have been called after Abort")
-	}
+	assert.False(t, secondCalled, "handler should not have been called after Abort")
 }
 
 func TestContext_IsAborted_FalseBeforeAbort(t *testing.T) {
@@ -44,9 +43,7 @@ func TestContext_IsAborted_FalseBeforeAbort(t *testing.T) {
 
 	rtr.Dispatch(newMockConnection("c1", "room1"), wspulse.Frame{Event: "ping"})
 
-	if wasAborted {
-		t.Error("IsAborted should be false before Abort is called")
-	}
+	assert.False(t, wasAborted, "IsAborted should be false before Abort is called")
 }
 
 func TestContext_IsAborted_TrueAfterAbort(t *testing.T) {
@@ -61,9 +58,7 @@ func TestContext_IsAborted_TrueAfterAbort(t *testing.T) {
 
 	rtr.Dispatch(newMockConnection("c1", "room1"), wspulse.Frame{Event: "ping"})
 
-	if !abortedInMiddleware {
-		t.Error("IsAborted should be true after Abort is called")
-	}
+	assert.True(t, abortedInMiddleware, "IsAborted should be true after Abort is called")
 }
 
 func TestContext_Set_Get_RoundTrip(t *testing.T) {
@@ -76,9 +71,8 @@ func TestContext_Set_Get_RoundTrip(t *testing.T) {
 
 	rtr.Dispatch(newMockConnection("c1", "room1"), wspulse.Frame{Event: "ping"})
 
-	if !exists || got != "alice" {
-		t.Errorf("expected (alice, true), got (%v, %v)", got, exists)
-	}
+	require.True(t, exists)
+	assert.Equal(t, "alice", got)
 }
 
 func TestContext_Get_MissingKey(t *testing.T) {
@@ -89,9 +83,7 @@ func TestContext_Get_MissingKey(t *testing.T) {
 
 	rtr.Dispatch(newMockConnection("c1", "room1"), wspulse.Frame{Event: "ping"})
 
-	if exists {
-		t.Error("Get should return false for a missing key")
-	}
+	assert.False(t, exists, "Get should return false for a missing key")
 }
 
 func TestContext_MustGet_ReturnsValue(t *testing.T) {
@@ -103,9 +95,7 @@ func TestContext_MustGet_ReturnsValue(t *testing.T) {
 
 	rtr.Dispatch(newMockConnection("c1", "room1"), wspulse.Frame{Event: "ping"})
 
-	if got != "admin" {
-		t.Errorf("expected %q, got %v", "admin", got)
-	}
+	assert.Equal(t, "admin", got)
 }
 
 func TestContext_MustGet_PanicsOnMissingKey(t *testing.T) {
@@ -123,9 +113,7 @@ func TestContext_MustGet_PanicsOnMissingKey(t *testing.T) {
 
 	rtr.Dispatch(newMockConnection("c1", "room1"), wspulse.Frame{Event: "ping"})
 
-	if !panicked {
-		t.Error("MustGet should panic for a missing key")
-	}
+	assert.True(t, panicked, "MustGet should panic for a missing key")
 }
 
 func TestContext_GetString_ReturnsString(t *testing.T) {
@@ -137,9 +125,7 @@ func TestContext_GetString_ReturnsString(t *testing.T) {
 
 	rtr.Dispatch(newMockConnection("c1", "room1"), wspulse.Frame{Event: "ping"})
 
-	if got != "bob" {
-		t.Errorf("expected %q, got %q", "bob", got)
-	}
+	assert.Equal(t, "bob", got)
 }
 
 func TestContext_GetString_MissingKeyReturnsEmpty(t *testing.T) {
@@ -150,9 +136,7 @@ func TestContext_GetString_MissingKeyReturnsEmpty(t *testing.T) {
 
 	rtr.Dispatch(newMockConnection("c1", "room1"), wspulse.Frame{Event: "ping"})
 
-	if got != "" {
-		t.Errorf("expected empty string, got %q", got)
-	}
+	assert.Empty(t, got)
 }
 
 func TestContext_GetString_WrongTypeReturnsEmpty(t *testing.T) {
@@ -164,9 +148,7 @@ func TestContext_GetString_WrongTypeReturnsEmpty(t *testing.T) {
 
 	rtr.Dispatch(newMockConnection("c1", "room1"), wspulse.Frame{Event: "ping"})
 
-	if got != "" {
-		t.Errorf("expected empty string for non-string value, got %q", got)
-	}
+	assert.Empty(t, got, "expected empty string for non-string value")
 }
 
 func TestContext_Set_OverwritesExistingKey(t *testing.T) {
@@ -182,9 +164,7 @@ func TestContext_Set_OverwritesExistingKey(t *testing.T) {
 
 	rtr.Dispatch(newMockConnection("c1", "room1"), wspulse.Frame{Event: "ping"})
 
-	if got != "second" {
-		t.Errorf("expected %q, got %v", "second", got)
-	}
+	assert.Equal(t, "second", got)
 }
 
 func TestContext_ConnectionAndFrameAccessible(t *testing.T) {
@@ -202,13 +182,7 @@ func TestContext_ConnectionAndFrameAccessible(t *testing.T) {
 		wspulse.Frame{Event: "chat"},
 	)
 
-	if gotID != "conn-1" {
-		t.Errorf("expected ID %q, got %q", "conn-1", gotID)
-	}
-	if gotRoomID != "room-A" {
-		t.Errorf("expected RoomID %q, got %q", "room-A", gotRoomID)
-	}
-	if gotFrameEvent != "chat" {
-		t.Errorf("expected FrameEvent %q, got %q", "chat", gotFrameEvent)
-	}
+	assert.Equal(t, "conn-1", gotID)
+	assert.Equal(t, "room-A", gotRoomID)
+	assert.Equal(t, "chat", gotFrameEvent)
 }

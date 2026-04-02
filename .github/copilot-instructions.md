@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-wspulse/core provides the **shared types** used across the wspulse WebSocket ecosystem: `Frame`, `Codec`, `JSONCodec`, and sentinel errors. Module path: `github.com/wspulse/core`. Package name: `wspulse`. This module has **zero external dependencies** (stdlib only).
+wspulse/core provides the **shared types** used across the wspulse WebSocket ecosystem: `Frame`, `Codec`, `JSONCodec`, and sentinel errors. Module path: `github.com/wspulse/core`. Package name: `wspulse`. This module has **zero production dependencies** (stdlib only). Test dependencies (e.g. `testify`) are permitted with justification.
 
 ## Architecture
 
@@ -69,7 +69,7 @@ All new features and design changes follow this process — do not skip steps:
 1. **Read before write** — always read the target file and relevant docs fully before editing.
 2. **Minimal changes** — one concern per edit; no drive-by refactors.
 3. **No hardcoded secrets** — all configuration via environment variables.
-4. **Zero external dependencies** — core must only depend on Go stdlib. Any change introducing an external dependency must be explicitly justified and approved.
+4. **Zero production dependencies** — core's production code must only depend on Go stdlib. Test dependencies (`_test.go` only) are permitted when justified (e.g. `testify` for assertion readability). Any change introducing a production dependency must be explicitly justified and approved.
 5. **No breaking changes without version bump** — never rename, remove, or change the signature of an exported symbol without bumping the major version. When unsure, add alongside the old symbol and deprecate.
 6. **STOP — test first, fix second** — when a bug is discovered or reported, do NOT touch production code until a failing test exists. Follow this exact sequence without skipping or reordering:
     1. Write a failing test that reproduces the bug.

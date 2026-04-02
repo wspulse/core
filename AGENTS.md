@@ -27,7 +27,7 @@ making any changes.
 ## Non-negotiable Rules
 
 1. **Read before write** — read the target file before any edit.
-2. **Zero external dependencies** — core must only depend on Go stdlib.
+2. **Zero production dependencies** — core's production code must only depend on Go stdlib. Test dependencies are permitted when justified.
 3. **No breaking changes without version bump.**
 4. **No hardcoded secrets.**
 5. **Minimal changes** — one concern per edit; no drive-by refactors.
