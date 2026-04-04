@@ -4,6 +4,14 @@
 
 ---
 
+## [0.3.1] - 2026-04-04
+
+### Changed
+
+- `Transport` GoDoc now documents the comparability requirement — implementations must be comparable (`==` / `!=`) because the server uses interface equality to detect stale transports
+
+---
+
 ## [0.3.0] - 2026-04-02
 
 ### Added
@@ -45,6 +53,8 @@
 - `TextMessage` (1) and `BinaryMessage` (2) WebSocket frame type constants
 - `ErrConnectionClosed` and `ErrSendBufferFull` sentinel errors
 
-[Unreleased]: https://github.com/wspulse/core/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/wspulse/core/compare/v0.3.1...HEAD
+[0.3.1]: https://github.com/wspulse/core/compare/v0.3.0...v0.3.1
+[0.3.0]: https://github.com/wspulse/core/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/wspulse/core/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/wspulse/core/releases/tag/v0.1.0
