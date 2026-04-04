@@ -5,6 +5,10 @@ import "time"
 // Transport abstracts the WebSocket connection for testability.
 // gorilla/websocket.Conn satisfies this interface via duck typing —
 // no wrapper or adapter is needed in production code.
+//
+// Implementations must be comparable (== / !=). The server uses interface
+// equality to detect stale transport-died notifications. Pointer receiver
+// types satisfy this requirement naturally.
 type Transport interface {
 	// ReadMessage reads a complete message from the connection.
 	// The returned messageType is TextMessage (1) or BinaryMessage (2).
