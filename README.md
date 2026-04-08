@@ -140,7 +140,7 @@ Key properties:
 ```bash
 make fmt        # auto-format source files (gofmt + goimports)
 make check      # validate format, lint, test with race detector (pre-commit gate)
-make test       # go test -race -count=3 ./...
+make test       # go test -race -count=50 ./... (override: TEST_COUNT=N)
 make test-cover # go test with coverage report → coverage.html
 make bench      # run benchmarks with memory allocation stats
 make tidy       # go mod tidy (GOWORK=off)

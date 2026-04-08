@@ -16,7 +16,7 @@ wspulse/core provides the **shared types** used across the wspulse WebSocket eco
 ```bash
 make fmt        # format (gofmt + goimports)
 make lint       # vet + golangci-lint
-make test       # race detector, count=3
+make test       # race detector, count=50 (override: TEST_COUNT=N)
 make check      # fmt + lint + test (pre-commit gate)
 make bench      # benchmarks with memory stats
 make test-cover # coverage report → coverage.html
