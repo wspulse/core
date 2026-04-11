@@ -4,7 +4,8 @@ import "context"
 
 // MessageType indicates the WebSocket message type of a frame.
 // Values follow RFC 6455 §11.8 and match those used by github.com/coder/websocket
-// and gorilla/websocket — no conversion is required at module boundaries.
+// and gorilla/websocket — numeric values are identical, so only a type cast is
+// needed at module boundaries (no runtime calculation).
 type MessageType int
 
 const (
@@ -16,8 +17,9 @@ const (
 )
 
 // StatusCode is a WebSocket close status code as defined by RFC 6455 §7.4.
-// Values match those used by github.com/coder/websocket — no conversion is
-// required at module boundaries.
+// Values match those used by github.com/coder/websocket — numeric values are
+// identical, so only a type cast is needed at module boundaries (no runtime
+// calculation).
 type StatusCode int
 
 // WebSocket close status codes from RFC 6455 §7.4.
