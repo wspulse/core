@@ -2,10 +2,11 @@ package wspulse
 
 import "context"
 
-// MessageType indicates the WebSocket message type of a frame.
-// Values follow RFC 6455 §11.8 and match those used by github.com/coder/websocket
-// and gorilla/websocket — numeric values are identical, so only a type cast is
-// needed at module boundaries (no runtime calculation).
+// MessageType indicates the WebSocket message type used in Transport read and
+// write operations. Values follow RFC 6455 §11.8 and match those used by
+// github.com/coder/websocket and gorilla/websocket — numeric values are
+// identical, so only a type cast is needed at module boundaries (no runtime
+// calculation).
 type MessageType int
 
 const (
@@ -32,8 +33,9 @@ const (
 	StatusGoingAway StatusCode = 1001
 
 	// StatusAbnormalClosure indicates a connection closed without a close frame,
-	// e.g. an abrupt TCP drop (1006). This code is never sent in a real close frame;
-	// it is used only for local error classification.
+	// e.g. an abrupt TCP drop (1006). RFC 6455 reserves this code for local error
+	// classification only — implementations must not include it in close frames
+	// sent to the peer.
 	StatusAbnormalClosure StatusCode = 1006
 )
 
