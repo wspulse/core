@@ -53,8 +53,8 @@ func TestSentinelErrors_HaveNonEmptyMessages(t *testing.T) {
 }
 
 func TestMessageTypeConstants(t *testing.T) {
-	assert.Equal(t, wspulse.MessageType(1), wspulse.MessageText)
-	assert.Equal(t, wspulse.MessageType(2), wspulse.MessageBinary)
+	assert.Equal(t, wspulse.MessageType(1), wspulse.TextMessage)
+	assert.Equal(t, wspulse.MessageType(2), wspulse.BinaryMessage)
 }
 
 func TestStatusCodeConstants(t *testing.T) {

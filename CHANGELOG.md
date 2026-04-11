@@ -5,12 +5,12 @@
 ### Added
 
 - `Transport` interface — abstracts WebSocket connection for testability with a context-based API
-- `MessageType` named type (`int`) for WebSocket frame types; constants `MessageText` (1) and `MessageBinary` (2)
+- `MessageType` named type (`int`) for WebSocket frame types; constants `TextMessage` (1) and `BinaryMessage` (2)
 - `StatusCode` named type (`int`) for WebSocket close status codes; constants `StatusNormalClosure` (1000), `StatusGoingAway` (1001), `StatusAbnormalClosure` (1006)
 
 ### Removed
 
-- **BREAKING**: Untyped int constants `TextMessage` and `BinaryMessage` replaced by `MessageText` and `MessageBinary` on the new `MessageType` type
+- **BREAKING**: `TextMessage` and `BinaryMessage` are now typed as `MessageType` instead of untyped int
 
 ---
 

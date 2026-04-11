@@ -10,11 +10,11 @@ import "context"
 type MessageType int
 
 const (
-	// MessageText denotes a UTF-8 encoded text frame (opcode 1).
-	MessageText MessageType = 1
+	// TextMessage denotes a UTF-8 encoded text frame (opcode 1).
+	TextMessage MessageType = 1
 
-	// MessageBinary denotes a binary frame (opcode 2).
-	MessageBinary MessageType = 2
+	// BinaryMessage denotes a binary frame (opcode 2).
+	BinaryMessage MessageType = 2
 )
 
 // StatusCode is a WebSocket close status code as defined by RFC 6455 §7.4.
