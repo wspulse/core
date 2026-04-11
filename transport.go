@@ -75,6 +75,8 @@ type Transport interface {
 	// block indefinitely. The reference implementation (github.com/coder/websocket)
 	// applies a 5 s write timeout for the close frame and waits up to 5 s for
 	// the peer's response.
+	// Callers must not pass StatusAbnormalClosure — it is reserved for local
+	// error classification and is not a valid on-wire close code.
 	Close(code StatusCode, reason string) error
 
 	// CloseNow closes the underlying connection immediately without
