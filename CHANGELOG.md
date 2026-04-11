@@ -1,19 +1,11 @@
 # Changelog
 
-## [Unreleased]
-
-### Added
-
-- `StatusCode` constants expanded to cover the full RFC 6455 §7.4.1 set: `StatusProtocolError` (1002), `StatusUnsupportedData` (1003), `StatusNoStatusReceived` (1005), `StatusInvalidFramePayloadData` (1007), `StatusPolicyViolation` (1008), `StatusMessageTooBig` (1009), `StatusMandatoryExtension` (1010), `StatusInternalError` (1011), `StatusTLSHandshake` (1015). Local-only codes (1005, 1006, 1015) are documented as MUST NOT be sent in a close frame.
-
----
-
 ## [0.4.0] - 2026-04-11
 
 ### Added
 
 - `MessageType` named type (`int`) for WebSocket frame types
-- `StatusCode` named type (`int`) for WebSocket close status codes; constants `StatusNormalClosure` (1000), `StatusGoingAway` (1001), `StatusAbnormalClosure` (1006)
+- `StatusCode` named type (`int`) for WebSocket close status codes; full RFC 6455 §7.4.1 set: `StatusNormalClosure` (1000), `StatusGoingAway` (1001), `StatusProtocolError` (1002), `StatusUnsupportedData` (1003), `StatusNoStatusReceived` (1005), `StatusAbnormalClosure` (1006), `StatusInvalidFramePayloadData` (1007), `StatusPolicyViolation` (1008), `StatusMessageTooBig` (1009), `StatusMandatoryExtension` (1010), `StatusInternalError` (1011), `StatusTLSHandshake` (1015). Local-only codes (1005, 1006, 1015) are documented as MUST NOT be sent in a close frame.
 
 ### Changed
 
