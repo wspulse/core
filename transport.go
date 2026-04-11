@@ -1,40 +1,85 @@
 package wspulse
 
-import "time"
+import "context"
+
+// MessageType indicates the WebSocket message type used in Transport read and
+// write operations. Values follow RFC 6455 §11.8 and match those used by
+// github.com/coder/websocket and gorilla/websocket — numeric values are
+// identical, so only a type cast is needed at module boundaries (no runtime
+// calculation).
+type MessageType int
+
+const (
+	// TextMessage denotes a UTF-8 encoded text frame (opcode 1).
+	TextMessage MessageType = 1
+
+	// BinaryMessage denotes a binary frame (opcode 2).
+	BinaryMessage MessageType = 2
+)
+
+// StatusCode is a WebSocket close status code as defined by RFC 6455 §7.4.
+// Values match those used by github.com/coder/websocket — numeric values are
+// identical, so only a type cast is needed at module boundaries (no runtime
+// calculation).
+type StatusCode int
+
+// WebSocket close status codes from RFC 6455 §7.4.
+const (
+	// StatusNormalClosure indicates a normal, intentional close (1000).
+	StatusNormalClosure StatusCode = 1000
+
+	// StatusGoingAway indicates the endpoint is going away, e.g. server shutdown
+	// or browser tab close (1001).
+	StatusGoingAway StatusCode = 1001
+
+	// StatusAbnormalClosure indicates a connection closed without a close frame,
+	// e.g. an abrupt TCP drop (1006). RFC 6455 reserves this code for local error
+	// classification only — implementations must not include it in close frames
+	// sent to the peer.
+	StatusAbnormalClosure StatusCode = 1006
+)
 
 // Transport abstracts the WebSocket connection for testability.
-// gorilla/websocket.Conn satisfies this interface via duck typing —
-// no wrapper or adapter is needed in production code.
+// The API is context-based: deadlines are expressed via context cancellation
+// rather than explicit SetReadDeadline / SetWriteDeadline calls.
 //
-// Implementations must be comparable (== / !=). The server uses interface
+// *github.com/coder/websocket.Conn does not satisfy this interface directly;
+// each consuming module (hub, client-go) wraps it in a thin adapter that
+// converts between Transport's domain types and coder's native types.
+//
+// Implementations must be comparable (== / !=). The hub uses interface
 // equality to detect stale transport-died notifications. Pointer receiver
 // types satisfy this requirement naturally.
 type Transport interface {
-	// ReadMessage reads a complete message from the connection.
-	// The returned messageType is TextMessage (1) or BinaryMessage (2).
-	ReadMessage() (messageType int, p []byte, err error)
+	// Read reads the next message from the connection.
+	// Blocks until a message arrives, ctx is cancelled, or the connection closes.
+	Read(ctx context.Context) (MessageType, []byte, error)
 
-	// WriteMessage writes a complete message to the connection.
-	// messageType should be TextMessage (1) or BinaryMessage (2),
-	// consistent with Codec.FrameType.
-	WriteMessage(messageType int, data []byte) error
+	// Write sends a message to the connection.
+	// ctx may carry a deadline for the write operation.
+	Write(ctx context.Context, typ MessageType, data []byte) error
 
-	// SetReadLimit sets the maximum size in bytes for a message read
-	// from the connection.
-	SetReadLimit(limit int64)
+	// Ping sends a ping to the peer and waits for a pong.
+	// ctx may carry a deadline; if the pong does not arrive before the deadline,
+	// Ping returns an error and the connection should be considered dead.
+	// Must be called concurrently with Read.
+	Ping(ctx context.Context) error
 
-	// SetReadDeadline sets the read deadline on the underlying
-	// network connection.
-	SetReadDeadline(t time.Time) error
+	// SetReadLimit sets the maximum size in bytes for a single message read
+	// from the connection. Messages exceeding this limit are rejected.
+	SetReadLimit(n int64)
 
-	// SetWriteDeadline sets the write deadline on the underlying
-	// network connection.
-	SetWriteDeadline(t time.Time) error
+	// Close performs the WebSocket close handshake with the given status code
+	// and reason, then closes the underlying connection.
+	// Implementations must enforce a bounded internal timeout — they must not
+	// block indefinitely. The reference implementation (github.com/coder/websocket)
+	// applies a 5 s write timeout for the close frame and waits up to 5 s for
+	// the peer's response.
+	// Callers must not pass StatusAbnormalClosure — it is reserved for local
+	// error classification and is not a valid on-wire close code.
+	Close(code StatusCode, reason string) error
 
-	// SetPongHandler sets the handler for pong messages received
-	// from the peer.
-	SetPongHandler(h func(appData string) error)
-
-	// Close closes the underlying network connection.
-	Close() error
+	// CloseNow closes the underlying connection immediately without
+	// attempting a close handshake. Used in defer paths and error teardown.
+	CloseNow() error
 }

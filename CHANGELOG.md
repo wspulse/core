@@ -2,6 +2,16 @@
 
 ## [Unreleased]
 
+### Added
+
+- `MessageType` named type (`int`) for WebSocket frame types
+- `StatusCode` named type (`int`) for WebSocket close status codes; constants `StatusNormalClosure` (1000), `StatusGoingAway` (1001), `StatusAbnormalClosure` (1006)
+
+### Changed
+
+- **BREAKING**: `Transport` interface redesigned with a context-based API. Removed `SetReadDeadline`, `SetWriteDeadline`, `SetPongHandler`, `ReadMessage`, `WriteMessage`. Added `Read(ctx)`, `Write(ctx, typ, data)`, `Ping(ctx)`, `Close(code, reason)`, `CloseNow`. `SetReadLimit` retained unchanged. Consuming modules must wrap `*coder/websocket.Conn` in a thin adapter.
+- **BREAKING**: `TextMessage` and `BinaryMessage` changed from untyped `int` to the new `MessageType` type. Values are unchanged (1 and 2).
+
 ---
 
 ## [0.3.1] - 2026-04-04
@@ -13,10 +23,6 @@
 ---
 
 ## [0.3.0] - 2026-04-02
-
-### Added
-
-- `Transport` interface — abstracts WebSocket connection for testability. `*gorilla/websocket.Conn` satisfies it via duck typing.
 
 ### Removed
 
@@ -50,7 +56,7 @@
 - `Frame` struct with `ID string`, `Type string`, and `Payload []byte` fields
 - `Codec` interface: `Encode(Frame) ([]byte, error)`, `Decode([]byte) (Frame, error)`, `FrameType() int`
 - `JSONCodec` default implementation — JSON text frames, zero external dependencies
-- `TextMessage` (1) and `BinaryMessage` (2) WebSocket frame type constants
+- `TextMessage` (1) and `BinaryMessage` (2) untyped int constants for WebSocket frame types
 - `ErrConnectionClosed` and `ErrSendBufferFull` sentinel errors
 
 [Unreleased]: https://github.com/wspulse/core/compare/v0.3.1...HEAD
