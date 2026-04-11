@@ -50,7 +50,7 @@
 - `Frame` struct with `ID string`, `Type string`, and `Payload []byte` fields
 - `Codec` interface: `Encode(Frame) ([]byte, error)`, `Decode([]byte) (Frame, error)`, `FrameType() int`
 - `JSONCodec` default implementation — JSON text frames, zero external dependencies
-- `TextMessage` (1) and `BinaryMessage` (2) WebSocket frame type constants
+- `MessageText` (1) and `MessageBinary` (2) WebSocket frame type constants on the new `MessageType` type
 - `ErrConnectionClosed` and `ErrSendBufferFull` sentinel errors
 
 [Unreleased]: https://github.com/wspulse/core/compare/v0.3.1...HEAD

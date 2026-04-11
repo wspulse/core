@@ -62,11 +62,15 @@ type Transport interface {
 	Ping(ctx context.Context) error
 
 	// SetReadLimit sets the maximum size in bytes for a single message read
-	// from the connection. Frames exceeding this limit are rejected.
+	// from the connection. Messages exceeding this limit are rejected.
 	SetReadLimit(n int64)
 
 	// Close performs the WebSocket close handshake with the given status code
 	// and reason, then closes the underlying connection.
+	// Implementations must enforce a bounded internal timeout — they must not
+	// block indefinitely. The reference implementation (github.com/coder/websocket)
+	// applies a 5 s write timeout for the close frame and waits up to 5 s for
+	// the peer's response.
 	Close(code StatusCode, reason string) error
 
 	// CloseNow closes the underlying connection immediately without
