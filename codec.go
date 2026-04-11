@@ -11,9 +11,9 @@ type Codec interface {
 	Decode(data []byte) (Frame, error)
 
 	// FrameType returns the WebSocket message type to use when sending.
-	// The returned int matches the MessageType constants (MessageText = 1,
-	// MessageBinary = 2). Consuming modules cast to MessageType at the
-	// adapter boundary.
+	// The returned int matches the value of MessageType constants
+	// (MessageText (1), MessageBinary (2)). Consuming modules cast to
+	// MessageType at the adapter boundary.
 	FrameType() int
 }
 
