@@ -53,8 +53,10 @@ const (
 	// (1009).
 	StatusMessageTooBig StatusCode = 1009
 
-	// StatusMandatoryExtension indicates the client expected the server to
-	// negotiate a required extension but the server did not (1010).
+	// StatusMandatoryExtension indicates the client required a WebSocket
+	// extension that the server did not negotiate (1010). Valid on the wire,
+	// but not used by the wspulse ecosystem — included for completeness when
+	// classifying close frames received from peers.
 	StatusMandatoryExtension StatusCode = 1010
 
 	// StatusInternalError indicates the server encountered an unexpected condition
