@@ -4,7 +4,7 @@
 
 ### Added
 
-- `MessageType` named type (`int`) for WebSocket frame types; constants `TextMessage` (1) and `BinaryMessage` (2)
+- `MessageType` named type (`int`) for WebSocket frame types
 - `StatusCode` named type (`int`) for WebSocket close status codes; constants `StatusNormalClosure` (1000), `StatusGoingAway` (1001), `StatusAbnormalClosure` (1006)
 
 ### Changed

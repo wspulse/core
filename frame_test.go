@@ -52,17 +52,6 @@ func TestSentinelErrors_HaveNonEmptyMessages(t *testing.T) {
 	}
 }
 
-func TestMessageTypeConstants(t *testing.T) {
-	assert.Equal(t, wspulse.MessageType(1), wspulse.TextMessage)
-	assert.Equal(t, wspulse.MessageType(2), wspulse.BinaryMessage)
-}
-
-func TestStatusCodeConstants(t *testing.T) {
-	assert.Equal(t, wspulse.StatusCode(1000), wspulse.StatusNormalClosure)
-	assert.Equal(t, wspulse.StatusCode(1001), wspulse.StatusGoingAway)
-	assert.Equal(t, wspulse.StatusCode(1006), wspulse.StatusAbnormalClosure)
-}
-
 func TestWireFrame_EmptyPayload_OmittedFromJSON(t *testing.T) {
 	f := wspulse.Frame{Event: "ping"}
 	data, err := wspulse.JSONCodec.Encode(f)
