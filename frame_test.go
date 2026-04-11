@@ -53,8 +53,8 @@ func TestSentinelErrors_HaveNonEmptyMessages(t *testing.T) {
 }
 
 func TestMessageTypeConstants(t *testing.T) {
-	assert.Equal(t, 1, wspulse.TextMessage)
-	assert.Equal(t, 2, wspulse.BinaryMessage)
+	assert.Equal(t, wspulse.MessageType(1), wspulse.MessageText)
+	assert.Equal(t, wspulse.MessageType(2), wspulse.MessageBinary)
 }
 
 func TestWireFrame_EmptyPayload_OmittedFromJSON(t *testing.T) {
