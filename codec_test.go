@@ -13,7 +13,7 @@ import (
 )
 
 func TestJSONCodec_FrameType_IsTextMessage(t *testing.T) {
-	assert.Equal(t, int(wspulse.TextMessage), wspulse.JSONCodec.FrameType())
+	assert.Equal(t, wspulse.TextMessage, wspulse.JSONCodec.FrameType())
 }
 
 func TestJSONCodec_Encode_ProducesValidJSON(t *testing.T) {

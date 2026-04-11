@@ -11,6 +11,7 @@
 
 - **BREAKING**: `Transport` interface redesigned with a context-based API. Removed `SetReadDeadline`, `SetWriteDeadline`, `SetPongHandler`, `ReadMessage`, `WriteMessage`. Added `Read(ctx)`, `Write(ctx, typ, data)`, `Ping(ctx)`, `Close(code, reason)`, `CloseNow`. `SetReadLimit` retained unchanged. Consuming modules must wrap `*coder/websocket.Conn` in a thin adapter.
 - **BREAKING**: `TextMessage` and `BinaryMessage` changed from untyped `int` to the new `MessageType` type. Values are unchanged (1 and 2).
+- **BREAKING**: `Codec.FrameType()` now returns `MessageType` instead of `int`. Update any custom `Codec` implementations accordingly.
 
 ---
 
