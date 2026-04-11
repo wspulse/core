@@ -23,17 +23,8 @@ const (
 // calculation).
 type StatusCode int
 
-// WebSocket close status codes from RFC 6455 §7.4.
-//
-// Codes are grouped by whether they may appear in a WebSocket close frame sent
-// to the peer:
-//
-//   - Standard codes (1000–1003, 1007–1011): valid on the wire; pass to Close.
-//   - Local-only codes (1005, 1006, 1015): RFC 6455 §7.4.1 explicitly reserves
-//     these for local use. They MUST NOT be sent in a close frame. They are
-//     exposed here solely for classifying locally observed error conditions
-//     (e.g. logging, metrics, internal routing). Passing them to Close will
-//     result in a protocol violation.
+// Standard WebSocket close status codes from RFC 6455 §7.4.1.
+// These are valid on the wire — safe to pass to Transport.Close.
 const (
 	// StatusNormalClosure indicates a normal, intentional close (1000).
 	StatusNormalClosure StatusCode = 1000
@@ -46,25 +37,11 @@ const (
 	StatusProtocolError StatusCode = 1002
 
 	// StatusUnsupportedData indicates the received data type cannot be handled,
-	// e.g. a text frame containing non-UTF-8 bytes (1003).
+	// e.g. a binary frame sent to an endpoint that only accepts text (1003).
 	StatusUnsupportedData StatusCode = 1003
 
-	// StatusNoStatusReceived indicates a connection closed without a close frame
-	// containing a status code (1005).
-	//
-	// LOCAL-ONLY — RFC 6455 §7.4.1: MUST NOT be sent in a close frame.
-	// Use only for local error classification (logging, metrics).
-	StatusNoStatusReceived StatusCode = 1005
-
-	// StatusAbnormalClosure indicates a connection closed without a close frame,
-	// e.g. an abrupt TCP drop (1006).
-	//
-	// LOCAL-ONLY — RFC 6455 §7.4.1: MUST NOT be sent in a close frame.
-	// Use only for local error classification (logging, metrics).
-	StatusAbnormalClosure StatusCode = 1006
-
 	// StatusInvalidFramePayloadData indicates the received message contains data
-	// inconsistent with the message type, e.g. non-UTF-8 bytes in a text message
+	// inconsistent with the message type, e.g. non-UTF-8 bytes in a text frame
 	// (1007).
 	StatusInvalidFramePayloadData StatusCode = 1007
 
@@ -83,11 +60,21 @@ const (
 	// StatusInternalError indicates the server encountered an unexpected condition
 	// that prevented it from fulfilling the request (1011).
 	StatusInternalError StatusCode = 1011
+)
+
+// Local-only WebSocket close status codes from RFC 6455 §7.4.1.
+// These MUST NOT be sent in a close frame — do not pass them to Transport.Close.
+// Use them only to classify locally observed error conditions (logging, metrics).
+const (
+	// StatusNoStatusReceived indicates a close frame was received but contained
+	// no status code (1005).
+	StatusNoStatusReceived StatusCode = 1005
+
+	// StatusAbnormalClosure indicates the connection was closed without any close
+	// frame, e.g. an abrupt TCP drop (1006).
+	StatusAbnormalClosure StatusCode = 1006
 
 	// StatusTLSHandshake indicates a TLS handshake failure (1015).
-	//
-	// LOCAL-ONLY — RFC 6455 §7.4.1: MUST NOT be sent in a close frame.
-	// Use only for local error classification (logging, metrics).
 	StatusTLSHandshake StatusCode = 1015
 )
 
@@ -127,8 +114,9 @@ type Transport interface {
 	// block indefinitely. The reference implementation (github.com/coder/websocket)
 	// applies a 5 s write timeout for the close frame and waits up to 5 s for
 	// the peer's response.
-	// Callers must not pass StatusAbnormalClosure — it is reserved for local
-	// error classification and is not a valid on-wire close code.
+	// Callers must not pass local-only codes (StatusNoStatusReceived,
+	// StatusAbnormalClosure, StatusTLSHandshake) — doing so is a protocol
+	// violation. Use only the standard codes declared in the first const block.
 	Close(code StatusCode, reason string) error
 
 	// CloseNow closes the underlying connection immediately without
