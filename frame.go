@@ -2,17 +2,6 @@ package wspulse
 
 import "errors"
 
-// WebSocket message type constants.
-// These mirror the standard WebSocket frame types without importing gorilla/websocket,
-// keeping this module free of external dependencies.
-const (
-	// TextMessage denotes a UTF-8 encoded text WebSocket frame (opcode 1).
-	TextMessage = 1
-
-	// BinaryMessage denotes a binary WebSocket frame (opcode 2).
-	BinaryMessage = 2
-)
-
 // Frame is the minimal transport unit for all WebSocket communication.
 // Payload bytes are opaque to the wspulse layer; their format depends on the Codec in use.
 // When using JSONCodec (the default), Payload must be valid JSON bytes (e.g. output of
