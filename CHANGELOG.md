@@ -4,7 +4,7 @@
 
 ### Removed
 
-- **BREAKING**: `Transport` interface removed from `core`. Each consuming module (`hub`, `client-go`) now defines its own internal transport interface with exactly the methods it needs. `MessageType`, `StatusCode`, and their constants remain in `core` and are unaffected.
+- **BREAKING**: `Transport` interface removed from `core`. Each consuming module (`wspulse/hub`, `wspulse/client-go`) now defines its own internal transport interface with exactly the methods it needs. `MessageType`, `StatusCode`, and their constants remain in `core` and are unaffected.
 
 ---
 
