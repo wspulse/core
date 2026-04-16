@@ -7,7 +7,7 @@
 
 Shared types for the [wspulse](https://github.com/wspulse) WebSocket ecosystem.
 
-This module provides `Frame`, `Codec`, `JSONCodec`, `Transport`, and sentinel errors used by both [wspulse/server](https://github.com/wspulse/server) and [wspulse/client-go](https://github.com/wspulse/client-go). It has **zero production dependencies** (Go stdlib only).
+This module provides `Frame`, `Codec`, `JSONCodec`, wire-protocol types (`MessageType`, `StatusCode`), and sentinel errors used by both [wspulse/hub](https://github.com/wspulse/hub) and [wspulse/client-go](https://github.com/wspulse/client-go). It has **zero production dependencies** (Go stdlib only).
 
 **Status:** v0 — API is being stabilized. Module path: `github.com/wspulse/core`.
 
@@ -119,7 +119,7 @@ r.On("ping", func(c *router.Context) {
     _ = c.Connection.Send(wspulse.Frame{Event: "pong"})
 })
 
-// Dispatch — call this from WithOnMessage in wspulse/server
+// Dispatch — call this from WithOnMessage in wspulse/hub
 r.Dispatch(connection, frame)
 ```
 
@@ -151,5 +151,5 @@ make clean      # remove build artifacts and test cache
 
 ## Related
 
-- [wspulse/server](https://github.com/wspulse/server) — WebSocket server library
+- [wspulse/hub](https://github.com/wspulse/hub) — WebSocket server library
 - [wspulse/client-go](https://github.com/wspulse/client-go) — Go WebSocket client with auto-reconnect
