@@ -1,9 +1,7 @@
 package wspulse
 
-import "context"
-
-// MessageType indicates the WebSocket message type used in Transport read and
-// write operations. Values follow RFC 6455 §11.8 and match those used by
+// MessageType indicates the WebSocket message type used in read and write
+// operations. Values follow RFC 6455 §11.8 and match those used by
 // github.com/coder/websocket and gorilla/websocket — numeric values are
 // identical, so only a type cast is needed at module boundaries (no runtime
 // calculation).
@@ -24,7 +22,7 @@ const (
 type StatusCode int
 
 // Standard WebSocket close status codes from RFC 6455 §7.4.1.
-// These are valid on the wire — safe to pass to Transport.Close.
+// These are valid on the wire — safe to send in a WebSocket close frame.
 const (
 	// StatusNormalClosure indicates a normal, intentional close (1000).
 	StatusNormalClosure StatusCode = 1000
@@ -65,7 +63,7 @@ const (
 )
 
 // Local-only WebSocket close status codes from RFC 6455 §7.4.1.
-// These MUST NOT be sent in a close frame — do not pass them to Transport.Close.
+// These MUST NOT be sent in a WebSocket close frame.
 // Use them only to classify locally observed error conditions (logging, metrics).
 const (
 	// StatusNoStatusReceived indicates a close frame was received but contained
@@ -79,49 +77,3 @@ const (
 	// StatusTLSHandshake indicates a TLS handshake failure (1015).
 	StatusTLSHandshake StatusCode = 1015
 )
-
-// Transport abstracts the WebSocket connection for testability.
-// The API is context-based: deadlines are expressed via context cancellation
-// rather than explicit SetReadDeadline / SetWriteDeadline calls.
-//
-// *github.com/coder/websocket.Conn does not satisfy this interface directly;
-// each consuming module (hub, client-go) wraps it in a thin adapter that
-// converts between Transport's domain types and coder's native types.
-//
-// Implementations must be comparable (== / !=). The hub uses interface
-// equality to detect stale transport-died notifications. Pointer receiver
-// types satisfy this requirement naturally.
-type Transport interface {
-	// Read reads the next message from the connection.
-	// Blocks until a message arrives, ctx is cancelled, or the connection closes.
-	Read(ctx context.Context) (MessageType, []byte, error)
-
-	// Write sends a message to the connection.
-	// ctx may carry a deadline for the write operation.
-	Write(ctx context.Context, typ MessageType, data []byte) error
-
-	// Ping sends a ping to the peer and waits for a pong.
-	// ctx may carry a deadline; if the pong does not arrive before the deadline,
-	// Ping returns an error and the connection should be considered dead.
-	// Must be called concurrently with Read.
-	Ping(ctx context.Context) error
-
-	// SetReadLimit sets the maximum size in bytes for a single message read
-	// from the connection. Messages exceeding this limit are rejected.
-	SetReadLimit(n int64)
-
-	// Close performs the WebSocket close handshake with the given status code
-	// and reason, then closes the underlying connection.
-	// Implementations must enforce a bounded internal timeout — they must not
-	// block indefinitely. The reference implementation (github.com/coder/websocket)
-	// applies a 5 s write timeout for the close frame and waits up to 5 s for
-	// the peer's response.
-	// Callers must not pass local-only codes (StatusNoStatusReceived,
-	// StatusAbnormalClosure, StatusTLSHandshake) — doing so is a protocol
-	// violation. Use only the standard codes declared in the first const block.
-	Close(code StatusCode, reason string) error
-
-	// CloseNow closes the underlying connection immediately without
-	// attempting a close handshake. Used in defer paths and error teardown.
-	CloseNow() error
-}

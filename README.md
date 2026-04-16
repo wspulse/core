@@ -7,7 +7,7 @@
 
 Shared types for the [wspulse](https://github.com/wspulse) WebSocket ecosystem.
 
-This module provides `Frame`, `Codec`, `JSONCodec`, `Transport`, and sentinel errors used by both [wspulse/server](https://github.com/wspulse/server) and [wspulse/client-go](https://github.com/wspulse/client-go). It has **zero production dependencies** (Go stdlib only).
+This module provides `Frame`, `Codec`, `JSONCodec`, and sentinel errors used by both [wspulse/server](https://github.com/wspulse/server) and [wspulse/client-go](https://github.com/wspulse/client-go). It has **zero production dependencies** (Go stdlib only).
 
 **Status:** v0 — API is being stabilized. Module path: `github.com/wspulse/core`.
 
