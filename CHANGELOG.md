@@ -2,15 +2,11 @@
 
 ## [Unreleased]
 
----
-
 ## [0.5.0] - 2026-04-16
 
 ### Removed
 
 - **BREAKING**: `Transport` interface removed from `core`. Each consuming module (`wspulse/hub`, `wspulse/client-go`) now defines its own internal transport interface with exactly the methods it needs. `MessageType`, `StatusCode`, and their constants remain in `core` and are unaffected.
-
----
 
 ## [0.4.0] - 2026-04-11
 
@@ -25,15 +21,11 @@
 - **BREAKING**: `TextMessage` and `BinaryMessage` changed from untyped `int` to the new `MessageType` type. Values are unchanged (1 and 2).
 - **BREAKING**: `Codec.FrameType()` now returns `MessageType` instead of `int`. Update any custom `Codec` implementations accordingly.
 
----
-
 ## [0.3.1] - 2026-04-04
 
 ### Changed
 
 - `Transport` GoDoc now documents the comparability requirement — implementations must be comparable (`==` / `!=`) because the server uses interface equality to detect stale transports
-
----
 
 ## [0.3.0] - 2026-04-02
 
@@ -44,8 +36,6 @@
 ### Removed
 
 - **BREAKING**: `Frame.ID` field removed — transport layer does not use it. Applications needing message IDs should use Payload.
-
----
 
 ## [0.2.0] - 2026-03-11
 
@@ -64,8 +54,6 @@
 - `Frame.Type` renamed to `Frame.Event` (**breaking**)
 - Wire format JSON key `"type"` changed to `"event"` (**breaking**)
 
----
-
 ## [0.1.0] - 2026-03-10
 
 ### Added
@@ -76,7 +64,8 @@
 - `TextMessage` (1) and `BinaryMessage` (2) untyped int constants for WebSocket frame types
 - `ErrConnectionClosed` and `ErrSendBufferFull` sentinel errors
 
-[Unreleased]: https://github.com/wspulse/core/compare/v0.4.0...HEAD
+[Unreleased]: https://github.com/wspulse/core/compare/v0.5.0...HEAD
+[0.5.0]: https://github.com/wspulse/core/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/wspulse/core/compare/v0.3.1...v0.4.0
 [0.3.1]: https://github.com/wspulse/core/compare/v0.3.0...v0.3.1
 [0.3.0]: https://github.com/wspulse/core/compare/v0.2.0...v0.3.0
