@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-wspulse/core provides the **shared types** used across the wspulse WebSocket ecosystem: `Frame`, `Codec`, `JSONCodec`, and sentinel errors. Module path: `github.com/wspulse/core`. Package name: `wspulse`. This module has **zero production dependencies** (stdlib only). Test dependencies (e.g. `testify`) are permitted with justification.
+wspulse/core provides the **shared types** used across the wspulse WebSocket ecosystem: `Frame`, `Codec`, `JSONCodec`, wire-protocol types (`MessageType`, `StatusCode`), and sentinel errors. Module path: `github.com/wspulse/core`. Package name: `wspulse`. This module has **zero production dependencies** (stdlib only). Test dependencies (e.g. `testify`) are permitted with justification.
 
 ## Architecture
 
