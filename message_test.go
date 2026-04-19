@@ -12,17 +12,17 @@ import (
 	wspulse "github.com/wspulse/core"
 )
 
-func TestFrame_ZeroValue_HasEmptyFields(t *testing.T) {
-	var f wspulse.Frame
-	assert.Empty(t, f.Event)
-	assert.Nil(t, f.Payload)
+func TestMessage_ZeroValue_HasEmptyFields(t *testing.T) {
+	var m wspulse.Message
+	assert.Empty(t, m.Event)
+	assert.Nil(t, m.Payload)
 }
 
-func TestFrame_FieldAssignment(t *testing.T) {
+func TestMessage_FieldAssignment(t *testing.T) {
 	payload := []byte(`{"key":"val"}`)
-	f := wspulse.Frame{Event: "msg", Payload: payload}
-	assert.Equal(t, "msg", f.Event)
-	assert.Equal(t, payload, f.Payload)
+	m := wspulse.Message{Event: "msg", Payload: payload}
+	assert.Equal(t, "msg", m.Event)
+	assert.Equal(t, payload, m.Payload)
 }
 
 func TestSentinelErrors_AreDistinct(t *testing.T) {
@@ -52,13 +52,13 @@ func TestSentinelErrors_HaveNonEmptyMessages(t *testing.T) {
 	}
 }
 
-func TestWireFrame_EmptyPayload_OmittedFromJSON(t *testing.T) {
-	f := wspulse.Frame{Event: "ping"}
-	data, err := wspulse.JSONCodec.Encode(f)
+func TestWireMessage_EmptyPayload_OmittedFromJSON(t *testing.T) {
+	m := wspulse.Message{Event: "ping"}
+	data, err := wspulse.JSONCodec.Encode(m)
 	require.NoError(t, err)
-	var m map[string]json.RawMessage
-	require.NoError(t, json.Unmarshal(data, &m))
-	assert.NotContains(t, m, "payload")
+	var raw map[string]json.RawMessage
+	require.NoError(t, json.Unmarshal(data, &raw))
+	assert.NotContains(t, raw, "payload")
 }
 
 // ---- Sentinel error conventions ---------------------------------------------
@@ -85,16 +85,16 @@ func TestSentinelErrors_SupportErrorsIs(t *testing.T) {
 	assert.ErrorIs(t, wrapped, wspulse.ErrConnectionClosed)
 }
 
-// ---- Frame copy semantics (lifecycle awareness) -----------------------------
+// ---- Message copy semantics (lifecycle awareness) ---------------------------
 
-func TestFrame_PayloadSharing_AfterCopy(t *testing.T) {
-	original := wspulse.Frame{
+func TestMessage_PayloadSharing_AfterCopy(t *testing.T) {
+	original := wspulse.Message{
 		Event:   "msg",
 		Payload: []byte(`{"data":"original"}`),
 	}
 	copied := original
 
-	// Mutate the copied frame's Payload in-place.
+	// Mutate the copied message's Payload in-place.
 	copied.Payload[0] = 'X'
 
 	// Since slices share backing arrays, the original is also affected.
@@ -103,14 +103,14 @@ func TestFrame_PayloadSharing_AfterCopy(t *testing.T) {
 		"expected shallow copy: modifying copy's Payload should affect original")
 }
 
-func TestFrame_IndependentPayload_RequiresExplicitCopy(t *testing.T) {
-	original := wspulse.Frame{
+func TestMessage_IndependentPayload_RequiresExplicitCopy(t *testing.T) {
+	original := wspulse.Message{
 		Event:   "msg",
 		Payload: []byte(`{"data":"safe"}`),
 	}
 
-	// Proper deep copy pattern for Frame.
-	independent := wspulse.Frame{
+	// Proper deep copy pattern for Message.
+	independent := wspulse.Message{
 		Event: original.Event,
 	}
 	independent.Payload = make([]byte, len(original.Payload))

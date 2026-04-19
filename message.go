@@ -2,12 +2,12 @@ package wspulse
 
 import "errors"
 
-// Frame is the minimal transport unit for all WebSocket communication.
+// Message is the minimal transport unit for all WebSocket communication.
 // Payload bytes are opaque to the wspulse layer; their format depends on the Codec in use.
 // When using JSONCodec (the default), Payload must be valid JSON bytes (e.g. output of
 // json.Marshal). When using a binary codec, Payload is the codec-encoded bytes.
-type Frame struct {
-	// Event identifies the frame purpose. wspulse does not interpret this value.
+type Message struct {
+	// Event identifies the message purpose. wspulse does not interpret this value.
 	// Conventional values: "msg" (user data), "sys" (system event), "ack" (acknowledgement).
 	Event string
 
@@ -21,6 +21,6 @@ var (
 	ErrConnectionClosed = errors.New("wspulse: connection is closed")
 
 	// ErrSendBufferFull is returned when the outbound buffer is full.
-	// The frame is dropped; handle backpressure at the application layer.
-	ErrSendBufferFull = errors.New("wspulse: send buffer full, frame dropped")
+	// The message is dropped; handle backpressure at the application layer.
+	ErrSendBufferFull = errors.New("wspulse: send buffer full, message dropped")
 )
