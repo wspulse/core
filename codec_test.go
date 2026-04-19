@@ -17,16 +17,16 @@ func TestJSONCodec_WireType_IsTextMessage(t *testing.T) {
 }
 
 func TestJSONCodec_Encode_ProducesValidJSON(t *testing.T) {
-	f := wspulse.Message{Event: "msg", Payload: []byte(`{"text":"hello"}`)}
-	data, err := wspulse.JSONCodec.Encode(f)
+	msg := wspulse.Message{Event: "msg", Payload: []byte(`{"text":"hello"}`)}
+	data, err := wspulse.JSONCodec.Encode(msg)
 	require.NoError(t, err)
 	var m map[string]json.RawMessage
 	require.NoError(t, json.Unmarshal(data, &m), "encoded bytes are not valid JSON")
 }
 
 func TestJSONCodec_Encode_PopulatesAllFields(t *testing.T) {
-	f := wspulse.Message{Event: "sys", Payload: []byte(`{"x":1}`)}
-	data, _ := wspulse.JSONCodec.Encode(f)
+	msg := wspulse.Message{Event: "sys", Payload: []byte(`{"x":1}`)}
+	data, _ := wspulse.JSONCodec.Encode(msg)
 	var m map[string]json.RawMessage
 	_ = json.Unmarshal(data, &m)
 	assertJSONString(t, m, "event", "sys")
@@ -34,31 +34,31 @@ func TestJSONCodec_Encode_PopulatesAllFields(t *testing.T) {
 }
 
 func TestJSONCodec_Encode_EmptyEventOmitted(t *testing.T) {
-	f := wspulse.Message{Payload: []byte(`"data"`)}
-	data, _ := wspulse.JSONCodec.Encode(f)
+	msg := wspulse.Message{Payload: []byte(`"data"`)}
+	data, _ := wspulse.JSONCodec.Encode(msg)
 	assert.NotContains(t, string(data), `"event"`)
 }
 
 func TestJSONCodec_Encode_PayloadIsNotBase64(t *testing.T) {
 	payload := []byte(`{"nested":{"k":"v"}}`)
-	f := wspulse.Message{Event: "msg", Payload: payload}
-	data, _ := wspulse.JSONCodec.Encode(f)
+	msg := wspulse.Message{Event: "msg", Payload: payload}
+	data, _ := wspulse.JSONCodec.Encode(msg)
 	assert.Contains(t, string(data), `"nested"`,
 		"encoded JSON should embed payload as-is, got: %s", data)
 }
 
 func TestJSONCodec_Decode_AllFields(t *testing.T) {
 	input := `{"event":"sys","payload":{"event":"join"}}`
-	f, err := wspulse.JSONCodec.Decode([]byte(input))
+	msg, err := wspulse.JSONCodec.Decode([]byte(input))
 	require.NoError(t, err)
-	assert.Equal(t, "sys", f.Event)
-	assert.Contains(t, string(f.Payload), `"event"`)
+	assert.Equal(t, "sys", msg.Event)
+	assert.Contains(t, string(msg.Payload), `"event"`)
 }
 
 func TestJSONCodec_Decode_MissingFieldsAreEmpty(t *testing.T) {
-	f, err := wspulse.JSONCodec.Decode([]byte(`{}`))
+	msg, err := wspulse.JSONCodec.Decode([]byte(`{}`))
 	require.NoError(t, err)
-	assert.Empty(t, f.Event)
+	assert.Empty(t, msg.Event)
 }
 
 func TestJSONCodec_Decode_InvalidJSON_ReturnsError(t *testing.T) {

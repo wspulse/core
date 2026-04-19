@@ -10,12 +10,11 @@
 //	rtr.On("chat.message", handleChat)
 //	rtr.On("chat.join", handleJoin)
 //
-//	// Integrate with wspulse/hub:
-//	hub := wspulse.NewHub(connectFunc,
-//	    wspulse.WithOnMessage(func(connection wspulse.Connection, msg wspulse.Message) {
-//	        rtr.Dispatch(connection, msg)
-//	    }),
-//	)
+//	// Dispatch inbound messages into the router from your
+//	// connection manager (e.g. wspulse/hub's OnMessage callback):
+//	onMessage := func(conn Connection, msg wspulse.Message) {
+//	    rtr.Dispatch(conn, msg)
+//	}
 package router
 
 import wspulse "github.com/wspulse/core"

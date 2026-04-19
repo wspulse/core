@@ -29,7 +29,7 @@ type HandlersChain []HandlerFunc
 // called from the goroutine that performs dispatch, and callers are expected
 // to enforce serial handler execution per logical connection.
 type Context struct {
-	// Connection is the logical WebSocket session that sent the frame.
+	// Connection is the logical WebSocket session that sent the message.
 	Connection Connection
 
 	// Message is the decoded inbound message being dispatched.
