@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-04-19
+
 ### Changed
 
 - **BREAKING**: `Frame` type renamed to `Message`. All references updated: `Codec.Encode(m Message)`, `Codec.Decode() (Message, error)`, `router.Context.Message`, `router.Dispatch(conn, msg Message)`, `router.Connection.Send(msg Message)`. Wire format is unchanged (`"event"` and `"payload"` JSON keys).
@@ -70,7 +72,8 @@
 - `TextMessage` (1) and `BinaryMessage` (2) untyped int constants for WebSocket frame types
 - `ErrConnectionClosed` and `ErrSendBufferFull` sentinel errors
 
-[Unreleased]: https://github.com/wspulse/core/compare/v0.5.0...HEAD
+[Unreleased]: https://github.com/wspulse/core/compare/v0.6.0...HEAD
+[0.6.0]: https://github.com/wspulse/core/compare/v0.5.0...v0.6.0
 [0.5.0]: https://github.com/wspulse/core/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/wspulse/core/compare/v0.3.1...v0.4.0
 [0.3.1]: https://github.com/wspulse/core/compare/v0.3.0...v0.3.1
