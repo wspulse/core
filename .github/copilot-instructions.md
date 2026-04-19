@@ -2,14 +2,14 @@
 
 ## Project Overview
 
-wspulse/core provides the **shared types** used across the wspulse WebSocket ecosystem: `Frame`, `Codec`, `JSONCodec`, wire-protocol types (`MessageType`, `StatusCode`), and sentinel errors. Module path: `github.com/wspulse/core`. Package name: `wspulse`. This module has **zero production dependencies** (stdlib only). Test dependencies (e.g. `testify`) are permitted with justification.
+wspulse/core provides the **shared types** used across the wspulse WebSocket ecosystem: `Message`, `Codec`, `JSONCodec`, wire-protocol types (`MessageType`, `StatusCode`), and sentinel errors. Module path: `github.com/wspulse/core`. Package name: `wspulse`. This module has **zero production dependencies** (stdlib only). Test dependencies (e.g. `testify`) are permitted with justification.
 
 ## Architecture
 
-- **`frame.go`** — `Frame` struct (the minimal transport unit) and shared sentinel errors (`ErrConnectionClosed`, `ErrSendBufferFull`).
+- **`message.go`** — `Message` struct (the minimal transport unit) and shared sentinel errors (`ErrConnectionClosed`, `ErrSendBufferFull`).
 - **`codec.go`** — `Codec` interface (`Encode`, `Decode`, `FrameType`), default `JSONCodec` implementation, and the unexported `wireFrame`/`jsonCodec` types.
 - **`protocol.go`** — `MessageType` and `StatusCode` typed constants (RFC 6455 values matching coder/websocket and gorilla/websocket). Each consuming module defines its own internal transport interface.
-- **`router/`** — Gin-style event router (`Router`, `Context`, `Connection`, `HandlerFunc`, `Recovery`). Dispatches inbound `Frame` values by `Frame.Event` through a global middleware + per-event handler chain. Lazy chain building, `sync.Pool`-backed `Context` recycling, atomic fast path for steady-state dispatches.
+- **`router/`** — Gin-style event router (`Router`, `Context`, `Connection`, `HandlerFunc`, `Recovery`). Dispatches inbound `Message` values by `Message.Event` through a global middleware + per-event handler chain. Lazy chain building, `sync.Pool`-backed `Context` recycling, atomic fast path for steady-state dispatches.
 
 ## Development Workflow
 
