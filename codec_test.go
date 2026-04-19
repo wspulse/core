@@ -12,8 +12,8 @@ import (
 	wspulse "github.com/wspulse/core"
 )
 
-func TestJSONCodec_FrameType_IsTextMessage(t *testing.T) {
-	assert.Equal(t, wspulse.TextMessage, wspulse.JSONCodec.FrameType())
+func TestJSONCodec_WireType_IsTextMessage(t *testing.T) {
+	assert.Equal(t, wspulse.TextMessage, wspulse.JSONCodec.WireType())
 }
 
 func TestJSONCodec_Encode_ProducesValidJSON(t *testing.T) {

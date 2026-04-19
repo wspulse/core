@@ -10,8 +10,8 @@ type Codec interface {
 	// Decode deserializes received WebSocket bytes into a Message.
 	Decode(data []byte) (Message, error)
 
-	// FrameType returns the WebSocket message type to use when sending.
-	FrameType() MessageType
+	// WireType returns the WebSocket message type to use when sending.
+	WireType() MessageType
 }
 
 // wireMessage is the JSON on-the-wire representation of a Message.
@@ -29,7 +29,7 @@ type jsonCodec struct{}
 // Message.Payload must be valid JSON bytes (e.g. the output of json.Marshal).
 var JSONCodec Codec = jsonCodec{}
 
-func (jsonCodec) FrameType() MessageType { return TextMessage }
+func (jsonCodec) WireType() MessageType { return TextMessage }
 
 func (jsonCodec) Encode(m Message) ([]byte, error) {
 	return json.Marshal(wireMessage{

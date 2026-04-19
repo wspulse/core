@@ -46,8 +46,8 @@ if err != nil {
 
 fmt.Println(decoded.Event) // "msg"
 
-// Check the codec's WebSocket frame type
-wspulse.JSONCodec.FrameType() // returns wspulse.TextMessage
+// Check the codec's WebSocket wire type
+wspulse.JSONCodec.WireType() // returns wspulse.TextMessage
 ```
 
 ### Sentinel errors
