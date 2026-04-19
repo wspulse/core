@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+### Changed
+
+- **BREAKING**: `Frame` type renamed to `Message`. All references updated: `Codec.Encode(m Message)`, `Codec.Decode() (Message, error)`, `router.Context.Message`, `router.Dispatch(conn, msg Message)`, `router.Connection.Send(msg Message)`. Wire format is unchanged (`"event"` and `"payload"` JSON keys). `Codec.FrameType()` method name is unchanged (refers to WebSocket frame type, not application type).
+- `ErrSendBufferFull` error message changed from "frame dropped" to "message dropped".
+
 ## [0.5.0] - 2026-04-16
 
 ### Removed
