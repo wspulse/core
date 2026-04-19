@@ -13,7 +13,7 @@ making any changes.
 
 **Key files**:
 
-- `frame.go` — `Frame` struct, sentinel errors
+- `message.go` — `Message` struct, sentinel errors
 - `codec.go` — `Codec` interface, `JSONCodec` implementation
 - `protocol.go` — `MessageType` and `StatusCode` wire protocol types (RFC 6455)
 - `router/router.go` — `Router`, `Use`, `On`, `Dispatch`

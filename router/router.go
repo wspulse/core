@@ -18,10 +18,10 @@ const maxChainLength = int(abortIndex)
 type Option func(*Router)
 
 // WithFallback sets a custom handler invoked when no route matches the
-// incoming frame's Event. The fallback participates in the normal handler
+// incoming message's Event. The fallback participates in the normal handler
 // chain, so global middleware registered via Use runs before it.
 //
-// The default fallback logs the unmatched frame event at WARN level using
+// The default fallback logs the unmatched message event at WARN level using
 // the standard library's log/slog package.
 func WithFallback(fn HandlerFunc) Option {
 	if fn == nil {
@@ -32,9 +32,9 @@ func WithFallback(fn HandlerFunc) Option {
 	}
 }
 
-// Router dispatches inbound wspulse frames to registered handlers based on
-// Frame.Event. It supports global middleware (Use), per-event handlers (On),
-// and a configurable fallback for unmatched frames.
+// Router dispatches inbound wspulse messages to registered handlers based on
+// Message.Event. It supports global middleware (Use), per-event handlers (On),
+// and a configurable fallback for unmatched messages.
 //
 // Router is safe for concurrent reads after all routes have been registered.
 // Do not call On or Use concurrently with Dispatch.
@@ -42,7 +42,7 @@ type Router struct {
 	// handlers holds global middleware registered via Use.
 	handlers HandlersChain
 
-	// routes maps Frame.Event to the merged (middleware + handler) chain.
+	// routes maps Message.Event to the merged (middleware + handler) chain.
 	// Chains are merged lazily at the first Dispatch call.
 	routes map[string]HandlersChain
 
@@ -51,7 +51,7 @@ type Router struct {
 	// calls are respected.
 	rawRoutes map[string]HandlersChain
 
-	// fallback is called when no route matches Frame.Event.
+	// fallback is called when no route matches Message.Event.
 	fallback HandlerFunc
 
 	// pool recycles Context objects to eliminate per-dispatch allocations.
@@ -68,7 +68,7 @@ type Router struct {
 }
 
 // New returns a new Router with the provided options applied.
-// The default fallback logs unmatched frame events at WARN level.
+// The default fallback logs unmatched message events at WARN level.
 func New(opts ...Option) *Router {
 	r := &Router{
 		routes:    make(map[string]HandlersChain),
@@ -113,7 +113,7 @@ func (r *Router) Use(handlers ...HandlerFunc) {
 	r.merged.Store(false)
 }
 
-// On registers one or more handlers for the given Frame.Event value ("event" in
+// On registers one or more handlers for the given Message.Event value ("event" in
 // JSON). Panics if event is empty, if no handlers are provided, if any handler
 // is nil, or if event is already registered.
 // On must not be called concurrently with Dispatch.
@@ -142,14 +142,14 @@ func (r *Router) On(event string, handlers ...HandlerFunc) {
 	r.merged.Store(false)
 }
 
-// Dispatch looks up the handler chain for frame.Event and executes it.
-// If no handler is registered for frame.Event, the fallback is called instead.
+// Dispatch looks up the handler chain for msg.Event and executes it.
+// If no handler is registered for msg.Event, the fallback is called instead.
 // Global middleware runs before the matched handler or fallback in all cases.
 //
 // Dispatch is safe to call concurrently from multiple goroutines after all
 // routes have been registered. However, calling Use or On while Dispatch is
 // running is not safe.
-func (r *Router) Dispatch(conn Connection, frame wspulse.Frame) {
+func (r *Router) Dispatch(conn Connection, msg wspulse.Message) {
 	if !r.merged.Load() {
 		r.buildMu.Lock()
 		if !r.merged.Load() {
@@ -161,10 +161,10 @@ func (r *Router) Dispatch(conn Connection, frame wspulse.Frame) {
 	c := r.pool.Get().(*Context)
 	c.reset()
 	c.Connection = conn
-	c.Frame = frame
+	c.Message = msg
 	c.index = -1
 
-	chain, exists := r.routes[frame.Event]
+	chain, exists := r.routes[msg.Event]
 	if !exists {
 		chain = r.routes[""]
 	}
@@ -208,7 +208,7 @@ func defaultFallback(c *Context) {
 		connectionID = c.Connection.ID()
 	}
 	slog.Warn("router: unmatched event",
-		"event", c.Frame.Event,
+		"event", c.Message.Event,
 		"connectionID", connectionID,
 	)
 }

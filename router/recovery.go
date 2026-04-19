@@ -29,7 +29,7 @@ func Recovery() HandlerFunc {
 				slog.Error("router: recovered from panic in handler",
 					"panic", fmt.Sprintf("%v", v),
 					"stack", string(debug.Stack()),
-					"event", c.Frame.Event,
+					"event", c.Message.Event,
 					"connectionID", connectionID,
 				)
 			}
