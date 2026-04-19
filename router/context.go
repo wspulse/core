@@ -13,7 +13,7 @@ import (
 const abortIndex int8 = math.MaxInt8 >> 1
 
 // HandlerFunc is the function signature for all router handlers and middleware.
-// The *Context argument carries the inbound connection, frame, flow control
+// The *Context argument carries the inbound connection, message, flow control
 // methods, and a per-dispatch key/value store.
 type HandlerFunc func(*Context)
 
@@ -21,7 +21,7 @@ type HandlerFunc func(*Context)
 // middleware + handler pipeline.
 type HandlersChain []HandlerFunc
 
-// Context carries the state for a single frame dispatch. It is obtained from
+// Context carries the state for a single message dispatch. It is obtained from
 // a sync.Pool and reset between dispatches; callers must not hold a reference
 // to a Context after the handler returns.
 //
@@ -29,11 +29,11 @@ type HandlersChain []HandlerFunc
 // called from the goroutine that performs dispatch, and callers are expected
 // to enforce serial handler execution per logical connection.
 type Context struct {
-	// Connection is the logical WebSocket session that sent the frame.
+	// Connection is the logical WebSocket session that sent the message.
 	Connection Connection
 
-	// Frame is the decoded inbound frame being dispatched.
-	Frame wspulse.Frame
+	// Message is the decoded inbound message being dispatched.
+	Message wspulse.Message
 
 	// handlers is the merged middleware + handler chain for this dispatch.
 	handlers HandlersChain
@@ -105,7 +105,7 @@ func (c *Context) GetString(key string) string {
 // reset clears all fields so the Context can be safely returned to the pool.
 func (c *Context) reset() {
 	c.Connection = nil
-	c.Frame = wspulse.Frame{}
+	c.Message = wspulse.Message{}
 	c.handlers = nil
 	c.index = -1
 	clear(c.keys) // preserve map allocation across pool reuses; no-op when nil

@@ -1,5 +1,5 @@
-// Package router provides Gin-style event routing for wspulse frames.
-// Inbound frames are dispatched by [wspulse.Frame.Event] through a middleware chain
+// Package router provides Gin-style event routing for wspulse messages.
+// Inbound messages are dispatched by [wspulse.Message.Event] through a middleware chain
 // with flow control ([Context.Next]/[Context.Abort]) and metadata passing
 // ([Context.Set]/[Context.Get]).
 //
@@ -10,12 +10,11 @@
 //	rtr.On("chat.message", handleChat)
 //	rtr.On("chat.join", handleJoin)
 //
-//	// Integrate with wspulse/server:
-//	srv := server.NewServer(connectFunc,
-//	    server.WithOnMessage(func(connection server.Connection, frame wspulse.Frame) {
-//	        rtr.Dispatch(connection, frame)
-//	    }),
-//	)
+//	// Dispatch inbound messages into the router from your
+//	// connection manager (e.g. wspulse/hub's OnMessage callback):
+//	onMessage := func(conn Connection, msg wspulse.Message) {
+//	    rtr.Dispatch(conn, msg)
+//	}
 package router
 
 import wspulse "github.com/wspulse/core"
@@ -24,7 +23,7 @@ import wspulse "github.com/wspulse/core"
 // perspective. It is a consumer-defined interface: any type that provides
 // these five methods satisfies it.
 //
-// wspulse/server's server.Connection satisfies this interface via Go
+// wspulse/hub's Connection satisfies this interface via Go
 // structural subtyping — no adapter is required.
 type Connection interface {
 	// ID returns the unique connection identifier.
@@ -33,8 +32,8 @@ type Connection interface {
 	// RoomID returns the room this connection belongs to.
 	RoomID() string
 
-	// Send enqueues frame for delivery to the remote peer.
-	Send(frame wspulse.Frame) error
+	// Send enqueues msg for delivery to the remote peer.
+	Send(msg wspulse.Message) error
 
 	// Close initiates a graceful shutdown of the session.
 	Close() error

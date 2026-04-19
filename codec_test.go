@@ -12,21 +12,21 @@ import (
 	wspulse "github.com/wspulse/core"
 )
 
-func TestJSONCodec_FrameType_IsTextMessage(t *testing.T) {
-	assert.Equal(t, wspulse.TextMessage, wspulse.JSONCodec.FrameType())
+func TestJSONCodec_WireType_IsTextMessage(t *testing.T) {
+	assert.Equal(t, wspulse.TextMessage, wspulse.JSONCodec.WireType())
 }
 
 func TestJSONCodec_Encode_ProducesValidJSON(t *testing.T) {
-	f := wspulse.Frame{Event: "msg", Payload: []byte(`{"text":"hello"}`)}
-	data, err := wspulse.JSONCodec.Encode(f)
+	msg := wspulse.Message{Event: "msg", Payload: []byte(`{"text":"hello"}`)}
+	data, err := wspulse.JSONCodec.Encode(msg)
 	require.NoError(t, err)
 	var m map[string]json.RawMessage
 	require.NoError(t, json.Unmarshal(data, &m), "encoded bytes are not valid JSON")
 }
 
 func TestJSONCodec_Encode_PopulatesAllFields(t *testing.T) {
-	f := wspulse.Frame{Event: "sys", Payload: []byte(`{"x":1}`)}
-	data, _ := wspulse.JSONCodec.Encode(f)
+	msg := wspulse.Message{Event: "sys", Payload: []byte(`{"x":1}`)}
+	data, _ := wspulse.JSONCodec.Encode(msg)
 	var m map[string]json.RawMessage
 	_ = json.Unmarshal(data, &m)
 	assertJSONString(t, m, "event", "sys")
@@ -34,31 +34,31 @@ func TestJSONCodec_Encode_PopulatesAllFields(t *testing.T) {
 }
 
 func TestJSONCodec_Encode_EmptyEventOmitted(t *testing.T) {
-	f := wspulse.Frame{Payload: []byte(`"data"`)}
-	data, _ := wspulse.JSONCodec.Encode(f)
+	msg := wspulse.Message{Payload: []byte(`"data"`)}
+	data, _ := wspulse.JSONCodec.Encode(msg)
 	assert.NotContains(t, string(data), `"event"`)
 }
 
 func TestJSONCodec_Encode_PayloadIsNotBase64(t *testing.T) {
 	payload := []byte(`{"nested":{"k":"v"}}`)
-	f := wspulse.Frame{Event: "msg", Payload: payload}
-	data, _ := wspulse.JSONCodec.Encode(f)
+	msg := wspulse.Message{Event: "msg", Payload: payload}
+	data, _ := wspulse.JSONCodec.Encode(msg)
 	assert.Contains(t, string(data), `"nested"`,
 		"encoded JSON should embed payload as-is, got: %s", data)
 }
 
 func TestJSONCodec_Decode_AllFields(t *testing.T) {
 	input := `{"event":"sys","payload":{"event":"join"}}`
-	f, err := wspulse.JSONCodec.Decode([]byte(input))
+	msg, err := wspulse.JSONCodec.Decode([]byte(input))
 	require.NoError(t, err)
-	assert.Equal(t, "sys", f.Event)
-	assert.Contains(t, string(f.Payload), `"event"`)
+	assert.Equal(t, "sys", msg.Event)
+	assert.Contains(t, string(msg.Payload), `"event"`)
 }
 
 func TestJSONCodec_Decode_MissingFieldsAreEmpty(t *testing.T) {
-	f, err := wspulse.JSONCodec.Decode([]byte(`{}`))
+	msg, err := wspulse.JSONCodec.Decode([]byte(`{}`))
 	require.NoError(t, err)
-	assert.Empty(t, f.Event)
+	assert.Empty(t, msg.Event)
 }
 
 func TestJSONCodec_Decode_InvalidJSON_ReturnsError(t *testing.T) {
@@ -72,7 +72,7 @@ func TestJSONCodec_Decode_EmptyInput_ReturnsError(t *testing.T) {
 }
 
 func TestJSONCodec_Roundtrip_PreservesAllFields(t *testing.T) {
-	original := wspulse.Frame{
+	original := wspulse.Message{
 		Event:   "msg",
 		Payload: []byte(`{"a":1,"b":true}`),
 	}
@@ -85,7 +85,7 @@ func TestJSONCodec_Roundtrip_PreservesAllFields(t *testing.T) {
 }
 
 func TestJSONCodec_Roundtrip_NilPayload(t *testing.T) {
-	original := wspulse.Frame{Event: "ping"}
+	original := wspulse.Message{Event: "ping"}
 	data, _ := wspulse.JSONCodec.Encode(original)
 	decoded, err := wspulse.JSONCodec.Decode(data)
 	require.NoError(t, err)
@@ -99,7 +99,7 @@ func TestJSONCodec_Decode_PayloadIsIndependentFromInput(t *testing.T) {
 	original := make([]byte, len(input))
 	copy(original, input)
 
-	frame, err := wspulse.JSONCodec.Decode(input)
+	msg, err := wspulse.JSONCodec.Decode(input)
 	require.NoError(t, err)
 
 	// Overwrite the input buffer to simulate buffer reuse in a read loop.
@@ -107,16 +107,16 @@ func TestJSONCodec_Decode_PayloadIsIndependentFromInput(t *testing.T) {
 		input[i] = 'X'
 	}
 
-	// The decoded Frame's Payload must remain intact.
-	assert.Contains(t, string(frame.Payload), `"key"`,
+	// The decoded Message's Payload must remain intact.
+	assert.Contains(t, string(msg.Payload), `"key"`,
 		"Payload corrupted after input buffer modification")
 }
 
 func TestJSONCodec_Encode_OutputIsIndependentFromInput(t *testing.T) {
 	payload := []byte(`{"mutable":"yes"}`)
-	frame := wspulse.Frame{Event: "msg", Payload: payload}
+	msg := wspulse.Message{Event: "msg", Payload: payload}
 
-	data, err := wspulse.JSONCodec.Encode(frame)
+	data, err := wspulse.JSONCodec.Encode(msg)
 	require.NoError(t, err)
 	snapshot := make([]byte, len(data))
 	copy(snapshot, data)
@@ -133,13 +133,13 @@ func TestJSONCodec_Encode_OutputIsIndependentFromInput(t *testing.T) {
 // ---- Edge cases: Payload variants -------------------------------------------
 
 func TestJSONCodec_Encode_InvalidPayload_ReturnsError(t *testing.T) {
-	frame := wspulse.Frame{Event: "msg", Payload: []byte("not valid json")}
-	_, err := wspulse.JSONCodec.Encode(frame)
+	msg := wspulse.Message{Event: "msg", Payload: []byte("not valid json")}
+	_, err := wspulse.JSONCodec.Encode(msg)
 	assert.Error(t, err)
 }
 
 func TestJSONCodec_Roundtrip_NullPayload(t *testing.T) {
-	original := wspulse.Frame{Event: "msg", Payload: []byte("null")}
+	original := wspulse.Message{Event: "msg", Payload: []byte("null")}
 	data, err := wspulse.JSONCodec.Encode(original)
 	require.NoError(t, err)
 	decoded, err := wspulse.JSONCodec.Decode(data)
@@ -148,7 +148,7 @@ func TestJSONCodec_Roundtrip_NullPayload(t *testing.T) {
 }
 
 func TestJSONCodec_Roundtrip_ArrayPayload(t *testing.T) {
-	original := wspulse.Frame{Event: "list", Payload: []byte(`[1,2,3]`)}
+	original := wspulse.Message{Event: "list", Payload: []byte(`[1,2,3]`)}
 	data, _ := wspulse.JSONCodec.Encode(original)
 	decoded, err := wspulse.JSONCodec.Decode(data)
 	require.NoError(t, err)
@@ -156,7 +156,7 @@ func TestJSONCodec_Roundtrip_ArrayPayload(t *testing.T) {
 }
 
 func TestJSONCodec_Roundtrip_StringPayload(t *testing.T) {
-	original := wspulse.Frame{Event: "echo", Payload: []byte(`"hello world"`)}
+	original := wspulse.Message{Event: "echo", Payload: []byte(`"hello world"`)}
 	data, _ := wspulse.JSONCodec.Encode(original)
 	decoded, err := wspulse.JSONCodec.Decode(data)
 	require.NoError(t, err)
@@ -164,7 +164,7 @@ func TestJSONCodec_Roundtrip_StringPayload(t *testing.T) {
 }
 
 func TestJSONCodec_Roundtrip_NumericPayload(t *testing.T) {
-	original := wspulse.Frame{Event: "val", Payload: []byte(`42`)}
+	original := wspulse.Message{Event: "val", Payload: []byte(`42`)}
 	data, _ := wspulse.JSONCodec.Encode(original)
 	decoded, err := wspulse.JSONCodec.Decode(data)
 	require.NoError(t, err)
@@ -172,7 +172,7 @@ func TestJSONCodec_Roundtrip_NumericPayload(t *testing.T) {
 }
 
 func TestJSONCodec_Roundtrip_UnicodePayload(t *testing.T) {
-	original := wspulse.Frame{
+	original := wspulse.Message{
 		Event:   "msg",
 		Payload: []byte(`{"text":"你好世界 🌍"}`),
 	}
@@ -184,7 +184,7 @@ func TestJSONCodec_Roundtrip_UnicodePayload(t *testing.T) {
 }
 
 func TestJSONCodec_Roundtrip_DeeplyNestedPayload(t *testing.T) {
-	original := wspulse.Frame{
+	original := wspulse.Message{
 		Event:   "nested",
 		Payload: []byte(`{"a":{"b":{"c":{"d":"deep"}}}}`),
 	}
@@ -198,16 +198,16 @@ func TestJSONCodec_Roundtrip_DeeplyNestedPayload(t *testing.T) {
 
 func TestJSONCodec_Decode_ExtraFields_Ignored(t *testing.T) {
 	input := `{"event":"msg","payload":{"k":"v"},"version":2,"extra":"ignored"}`
-	frame, err := wspulse.JSONCodec.Decode([]byte(input))
+	msg, err := wspulse.JSONCodec.Decode([]byte(input))
 	require.NoError(t, err)
-	assert.Equal(t, "msg", frame.Event)
+	assert.Equal(t, "msg", msg.Event)
 }
 
 func TestJSONCodec_Decode_NullPayloadField(t *testing.T) {
 	input := `{"event":"ping","payload":null}`
-	frame, err := wspulse.JSONCodec.Decode([]byte(input))
+	msg, err := wspulse.JSONCodec.Decode([]byte(input))
 	require.NoError(t, err)
-	assert.Equal(t, "null", string(frame.Payload))
+	assert.Equal(t, "null", string(msg.Payload))
 }
 
 // ---- Concurrency safety -----------------------------------------------------
@@ -221,7 +221,7 @@ func TestJSONCodec_ConcurrentEncodeDecode(t *testing.T) {
 		go func() {
 			defer waitGroup.Done()
 
-			original := wspulse.Frame{
+			original := wspulse.Message{
 				Event:   "msg",
 				Payload: []byte(`{"data":"test"}`),
 			}
@@ -245,7 +245,7 @@ func TestJSONCodec_Roundtrip_LargePayload(t *testing.T) {
 	// Build a ~10 KB JSON payload.
 	value := strings.Repeat("x", 10000)
 	payload, _ := json.Marshal(map[string]string{"big": value})
-	original := wspulse.Frame{Event: "bulk", Payload: payload}
+	original := wspulse.Message{Event: "bulk", Payload: payload}
 
 	data, err := wspulse.JSONCodec.Encode(original)
 	require.NoError(t, err)
@@ -257,13 +257,13 @@ func TestJSONCodec_Roundtrip_LargePayload(t *testing.T) {
 // ---- Benchmarks -------------------------------------------------------------
 
 func BenchmarkJSONCodec_Encode(b *testing.B) {
-	frame := wspulse.Frame{
+	msg := wspulse.Message{
 		Event:   "msg",
 		Payload: []byte(`{"user":"alice","text":"hello"}`),
 	}
 	b.ReportAllocs()
 	for b.Loop() {
-		_, _ = wspulse.JSONCodec.Encode(frame)
+		_, _ = wspulse.JSONCodec.Encode(msg)
 	}
 }
 
@@ -276,13 +276,13 @@ func BenchmarkJSONCodec_Decode(b *testing.B) {
 }
 
 func BenchmarkJSONCodec_Roundtrip(b *testing.B) {
-	frame := wspulse.Frame{
+	msg := wspulse.Message{
 		Event:   "msg",
 		Payload: []byte(`{"user":"alice","text":"hello"}`),
 	}
 	b.ReportAllocs()
 	for b.Loop() {
-		data, _ := wspulse.JSONCodec.Encode(frame)
+		data, _ := wspulse.JSONCodec.Encode(msg)
 		_, _ = wspulse.JSONCodec.Decode(data)
 	}
 }
