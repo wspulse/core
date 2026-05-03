@@ -1,7 +1,13 @@
 // Command benchsync regenerates the benchmark tables in docs from a fresh
-// `go test -bench` output file. It parses the standard Go benchmark format,
+// `go test -bench` output file. It parses the bench output line-by-line,
 // emits one markdown row per known benchmark name, and replaces the table
 // inside a managed marker block in the target document.
+//
+// The input must be produced with `-benchmem`: the parser only matches
+// lines that include the `B/op` and `allocs/op` columns. Without them
+// the parse returns no rows and `run` fails with "missing benchmark
+// result" for every expected target row. `make bench-ci` already passes
+// `-benchmem`, so use that target rather than invoking `go test` by hand.
 //
 // Run via `make bench-sync` from the repo root.
 package main
