@@ -17,7 +17,10 @@ The matrix covers:
 
 - `JSONCodec Encode` / `Decode` — wire-format encoding cost across
   `messageSize ∈ {64 B, 1 KiB, 16 KiB}`. Shared by every wspulse SDK that
-  speaks the JSON protocol; allocation count especially matters.
+  speaks the JSON protocol; allocation count especially matters. The axis
+  parameterises `Message.Payload` (the payload bytes); `Encode` adds a
+  fixed `event`/`payload` JSON envelope on top, so the encoded wire size
+  is roughly the labelled size + ~25 bytes of envelope.
 - `Message struct alloc` — bare struct construction + payload assignment
   written into a package-level sink (so the compiler cannot elide the loop).
   Watchdog bench: should report 0 allocs (the sink is a fixed slot, not a
