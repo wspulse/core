@@ -22,8 +22,7 @@ var messageAllocSink wspulse.Message
 func BenchmarkMessageAlloc(b *testing.B) {
 	payload := jsonPayload(64)
 	b.ReportAllocs()
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		messageAllocSink = wspulse.Message{Event: "bench", Payload: payload}
 	}
 }

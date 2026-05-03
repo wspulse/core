@@ -77,8 +77,7 @@ func BenchmarkRouterDispatch(b *testing.B) {
 				r.Dispatch(conn, msg)
 
 				b.ReportAllocs()
-				b.ResetTimer()
-				for i := 0; i < b.N; i++ {
+				for b.Loop() {
 					r.Dispatch(conn, msg)
 				}
 			})

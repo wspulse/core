@@ -33,8 +33,7 @@ func BenchmarkJSONCodecEncode(b *testing.B) {
 		b.Run(fmt.Sprintf("messageSize=%s", ms.label), func(b *testing.B) {
 			msg := wspulse.Message{Event: "bench", Payload: jsonPayload(ms.size)}
 			b.ReportAllocs()
-			b.ResetTimer()
-			for i := 0; i < b.N; i++ {
+			for b.Loop() {
 				_, err := wspulse.JSONCodec.Encode(msg)
 				if err != nil {
 					b.Fatalf("Encode: %v", err)
@@ -53,8 +52,7 @@ func BenchmarkJSONCodecDecode(b *testing.B) {
 				b.Fatalf("setup Encode: %v", err)
 			}
 			b.ReportAllocs()
-			b.ResetTimer()
-			for i := 0; i < b.N; i++ {
+			for b.Loop() {
 				if _, err := wspulse.JSONCodec.Decode(encoded); err != nil {
 					b.Fatalf("Decode: %v", err)
 				}
