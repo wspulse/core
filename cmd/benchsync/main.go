@@ -6,8 +6,9 @@
 // The input must be produced with `-benchmem`: the parser only matches
 // lines that include the `B/op` and `allocs/op` columns. Without them
 // the parse returns no rows and `run` fails with "missing benchmark
-// result" for every expected target row. `make bench-ci` already passes
-// `-benchmem`, so use that target rather than invoking `go test` by hand.
+// result for ..." on the first expected target row it cannot find.
+// `make bench-ci` already passes `-benchmem`, so use that target rather
+// than invoking `go test` by hand.
 //
 // Run via `make bench-sync` from the repo root.
 package main
