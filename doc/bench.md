@@ -2,10 +2,11 @@
 
 The table below is a checked-in baseline for `wspulse/core`, last refreshed
 locally by a maintainer running `make bench-sync` on the hardware noted in
-the table. The CI workflow runs the same benchmarks on every PR and uploads
-the raw `bench.txt` as an artefact; download it from the run page if you
-need to compare specific numbers between branches. CI does not regenerate
-or commit this file.
+the table. The CI workflow runs the same benchmarks on every code PR (the
+workflow ignores Markdown / LICENSE / `.github/instructions/**` changes)
+and uploads the raw `bench.txt` as an artefact; download it from the run
+page if you need to compare specific numbers between branches. CI does not
+regenerate or commit this file.
 
 Variance between machines is expected — these baselines are a regression
 sanity check, not a portability claim. Single runs at `-benchtime=3s -count=1`
