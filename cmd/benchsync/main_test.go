@@ -78,6 +78,7 @@ stale
 	assert.Contains(t, doc, "| `JSONCodec Encode (64 B)` | 720 | 256 | 3 |")
 	assert.Contains(t, doc, "| `JSONCodec Decode (16 KiB)` | 6,500 | 4,500 | 7 |")
 	assert.Contains(t, doc, "| `Message struct alloc` | 2.5 | 0 | 0 |")
+	assert.Contains(t, doc, "| `Router Dispatch (1 handler, 0 mw)` | 560 | 256 | 2 |")
 	assert.Contains(t, doc, "| `Router Dispatch (100 handlers, 3 mw)` | 1,530 | 400 | 9 |")
 }
 
