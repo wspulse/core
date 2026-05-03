@@ -133,15 +133,15 @@ func defaultTargets(root string) []benchTarget {
 		Name:  "BenchmarkMessageAlloc",
 		Label: "Message struct alloc",
 	})
-	for _, hc := range []int{1, 10, 100} {
-		handlerWord := "handlers"
-		if hc == 1 {
-			handlerWord = "handler"
+	for _, rc := range []int{1, 10, 100} {
+		routeWord := "routes"
+		if rc == 1 {
+			routeWord = "route"
 		}
 		for _, mw := range []int{0, 3} {
 			rows = append(rows, benchRow{
-				Name:  fmt.Sprintf("BenchmarkRouterDispatch/handlers=%d/middleware=%d", hc, mw),
-				Label: fmt.Sprintf("Router Dispatch (%d %s, %d mw)", hc, handlerWord, mw),
+				Name:  fmt.Sprintf("BenchmarkRouterDispatch/routes=%d/middleware=%d", rc, mw),
+				Label: fmt.Sprintf("Router Dispatch (%d %s, %d mw)", rc, routeWord, mw),
 			})
 		}
 	}

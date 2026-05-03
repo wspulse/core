@@ -31,29 +31,31 @@ func jsonPayload(size int) []byte {
 // BenchmarkRouterDispatch measures the cost of one Dispatch call.
 //
 // The two axes:
-//   - `handlers`: number of distinct events registered (router map size).
-//     Tests lookup cost as the registry grows.
+//   - `routes`: number of distinct events registered (router map size).
+//     Tests lookup cost as the registry grows. Each registered event has
+//     one terminal handler.
 //   - `middleware`: number of global middleware funcs in the chain.
-//     Tests per-handler chain execution cost. Each registered event has
-//     one terminal handler, so total chain length per Dispatch is
-//     middleware + 1.
+//     Tests per-handler chain execution cost. Total chain length per
+//     Dispatch is middleware + 1.
 //
 // The bench dispatches the middle-indexed event each iteration to keep
-// map-bucket access pattern stable across runs.
+// map-bucket access pattern stable across runs. A warmup Dispatch is
+// issued before ResetTimer so the one-time lazy chain build and first
+// sync.Pool allocation are not charged to the first iteration.
 func BenchmarkRouterDispatch(b *testing.B) {
 	noop := func(*router.Context) {}
 
-	for _, handlerCount := range []int{1, 10, 100} {
+	for _, routeCount := range []int{1, 10, 100} {
 		for _, mwDepth := range []int{0, 3} {
-			name := fmt.Sprintf("handlers=%d/middleware=%d", handlerCount, mwDepth)
+			name := fmt.Sprintf("routes=%d/middleware=%d", routeCount, mwDepth)
 			b.Run(name, func(b *testing.B) {
 				r := router.New()
 				for i := 0; i < mwDepth; i++ {
 					r.Use(noop)
 				}
 
-				events := make([]string, handlerCount)
-				for i := 0; i < handlerCount; i++ {
+				events := make([]string, routeCount)
+				for i := 0; i < routeCount; i++ {
 					ev := fmt.Sprintf("event%d", i)
 					events[i] = ev
 					r.On(ev, noop)
@@ -61,9 +63,13 @@ func BenchmarkRouterDispatch(b *testing.B) {
 
 				conn := benchConn{}
 				msg := wspulse.Message{
-					Event:   events[handlerCount/2],
+					Event:   events[routeCount/2],
 					Payload: jsonPayload(64),
 				}
+
+				// Warmup: triggers lazy chain build and primes sync.Pool so
+				// neither cost is charged to the first timed iteration.
+				r.Dispatch(conn, msg)
 
 				b.ReportAllocs()
 				b.ResetTimer()

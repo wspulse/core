@@ -20,7 +20,7 @@ cpu: Apple M1 Max
 BenchmarkJSONCodecEncode/messageSize=64B-10            5000000      720 ns/op    256 B/op    3 allocs/op
 BenchmarkJSONCodecDecode/messageSize=16KiB-10            50000     6500 ns/op   4500 B/op    7 allocs/op
 BenchmarkMessageAlloc-10                            500000000     2.5 ns/op       0 B/op    0 allocs/op
-BenchmarkRouterDispatch/handlers=100/middleware=3-10   100000     1530 ns/op    400 B/op    9 allocs/op
+BenchmarkRouterDispatch/routes=100/middleware=3-10     100000     1530 ns/op    400 B/op    9 allocs/op
 PASS
 `)
 
@@ -30,7 +30,7 @@ PASS
 	assert.Equal(t, "720", got.Results["BenchmarkJSONCodecEncode/messageSize=64B"].NSPerOp)
 	assert.Equal(t, "6500", got.Results["BenchmarkJSONCodecDecode/messageSize=16KiB"].NSPerOp)
 	assert.Equal(t, "2.5", got.Results["BenchmarkMessageAlloc"].NSPerOp)
-	assert.Equal(t, "1530", got.Results["BenchmarkRouterDispatch/handlers=100/middleware=3"].NSPerOp)
+	assert.Equal(t, "1530", got.Results["BenchmarkRouterDispatch/routes=100/middleware=3"].NSPerOp)
 }
 
 func TestRun(t *testing.T) {
@@ -51,12 +51,12 @@ BenchmarkJSONCodecDecode/messageSize=64B-10            3000000     820 ns/op    
 BenchmarkJSONCodecDecode/messageSize=1KiB-10            800000    1700 ns/op   1400 B/op    5 allocs/op
 BenchmarkJSONCodecDecode/messageSize=16KiB-10            50000    6500 ns/op   4500 B/op    7 allocs/op
 BenchmarkMessageAlloc-10                            500000000     2.5 ns/op       0 B/op    0 allocs/op
-BenchmarkRouterDispatch/handlers=1/middleware=0-10    2000000     560 ns/op    256 B/op    2 allocs/op
-BenchmarkRouterDispatch/handlers=1/middleware=3-10    1500000     720 ns/op    288 B/op    5 allocs/op
-BenchmarkRouterDispatch/handlers=10/middleware=0-10   1500000     650 ns/op    280 B/op    3 allocs/op
-BenchmarkRouterDispatch/handlers=10/middleware=3-10   1000000     820 ns/op    320 B/op    6 allocs/op
-BenchmarkRouterDispatch/handlers=100/middleware=0-10   500000    1230 ns/op    320 B/op    6 allocs/op
-BenchmarkRouterDispatch/handlers=100/middleware=3-10   100000    1530 ns/op    400 B/op    9 allocs/op
+BenchmarkRouterDispatch/routes=1/middleware=0-10    2000000     560 ns/op    256 B/op    2 allocs/op
+BenchmarkRouterDispatch/routes=1/middleware=3-10    1500000     720 ns/op    288 B/op    5 allocs/op
+BenchmarkRouterDispatch/routes=10/middleware=0-10   1500000     650 ns/op    280 B/op    3 allocs/op
+BenchmarkRouterDispatch/routes=10/middleware=3-10   1000000     820 ns/op    320 B/op    6 allocs/op
+BenchmarkRouterDispatch/routes=100/middleware=0-10   500000    1230 ns/op    320 B/op    6 allocs/op
+BenchmarkRouterDispatch/routes=100/middleware=3-10   100000    1530 ns/op    400 B/op    9 allocs/op
 `), 0o644))
 
 	docPath := filepath.Join(root, "doc", "bench.md")
@@ -78,8 +78,8 @@ stale
 	assert.Contains(t, doc, "| `JSONCodec Encode (64 B)` | 720 | 256 | 3 |")
 	assert.Contains(t, doc, "| `JSONCodec Decode (16 KiB)` | 6,500 | 4,500 | 7 |")
 	assert.Contains(t, doc, "| `Message struct alloc` | 2.5 | 0 | 0 |")
-	assert.Contains(t, doc, "| `Router Dispatch (1 handler, 0 mw)` | 560 | 256 | 2 |")
-	assert.Contains(t, doc, "| `Router Dispatch (100 handlers, 3 mw)` | 1,530 | 400 | 9 |")
+	assert.Contains(t, doc, "| `Router Dispatch (1 route, 0 mw)` | 560 | 256 | 2 |")
+	assert.Contains(t, doc, "| `Router Dispatch (100 routes, 3 mw)` | 1,530 | 400 | 9 |")
 }
 
 func TestRun_MissingResult(t *testing.T) {
