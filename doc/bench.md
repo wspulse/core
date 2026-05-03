@@ -29,17 +29,17 @@ Measured on `darwin/arm64` (`Apple M1 Max`).
 
 | Operation | ns/op | B/op | allocs/op |
 |---|---:|---:|---:|
-| `JSONCodec Encode (64 B)` | 390.3 | 144 | 2 |
-| `JSONCodec Encode (1 KiB)` | 3,833 | 1,200 | 2 |
-| `JSONCodec Encode (16 KiB)` | 58,294 | 18,496 | 2 |
-| `JSONCodec Decode (64 B)` | 633 | 336 | 7 |
-| `JSONCodec Decode (1 KiB)` | 3,477 | 1,296 | 7 |
-| `JSONCodec Decode (16 KiB)` | 48,459 | 16,656 | 7 |
-| `Message struct alloc` | 0.3164 | 0 | 0 |
-| `Router Dispatch (1 handlers, 0 mw)` | 18.88 | 0 | 0 |
-| `Router Dispatch (1 handlers, 3 mw)` | 23.27 | 0 | 0 |
-| `Router Dispatch (10 handlers, 0 mw)` | 28.86 | 0 | 0 |
-| `Router Dispatch (10 handlers, 3 mw)` | 32.39 | 0 | 0 |
-| `Router Dispatch (100 handlers, 0 mw)` | 33.05 | 0 | 0 |
-| `Router Dispatch (100 handlers, 3 mw)` | 33.73 | 0 | 0 |
+| `JSONCodec Encode (64 B)` | 386.4 | 144 | 2 |
+| `JSONCodec Encode (1 KiB)` | 3,827 | 1,200 | 2 |
+| `JSONCodec Encode (16 KiB)` | 58,631 | 18,496 | 2 |
+| `JSONCodec Decode (64 B)` | 636.9 | 336 | 7 |
+| `JSONCodec Decode (1 KiB)` | 3,468 | 1,296 | 7 |
+| `JSONCodec Decode (16 KiB)` | 48,221 | 16,656 | 7 |
+| `Message struct alloc` | 1.228 | 0 | 0 |
+| `Router Dispatch (1 handler, 0 mw)` | 18.81 | 0 | 0 |
+| `Router Dispatch (1 handler, 3 mw)` | 23.39 | 0 | 0 |
+| `Router Dispatch (10 handlers, 0 mw)` | 28.7 | 0 | 0 |
+| `Router Dispatch (10 handlers, 3 mw)` | 32.31 | 0 | 0 |
+| `Router Dispatch (100 handlers, 0 mw)` | 29.99 | 0 | 0 |
+| `Router Dispatch (100 handlers, 3 mw)` | 33.91 | 0 | 0 |
 <!-- benchsync:core:end -->
