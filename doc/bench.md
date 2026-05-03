@@ -20,9 +20,9 @@ The matrix covers:
 - `Message struct alloc` — bare struct construction + payload assignment.
   Watchdog bench: should report 0 allocs (Go escape analysis keeps the value
   on the stack); a regression to non-zero is a red flag.
-- `Router Dispatch` — event routing cost across `handlers ∈ {1, 10, 100}`
-  (router map size, one terminal handler per event) and `middleware ∈ {0, 3}`
-  (global middleware depth prepended to every chain).
+- `Router Dispatch` — event routing cost across `routes ∈ {1, 10, 100}`
+  (number of registered events, each with one terminal handler) and
+  `middleware ∈ {0, 3}` (global middleware depth prepended to every chain).
 
 <!-- benchsync:core:start -->
 Measured on `darwin/arm64` (`Apple M1 Max`).
