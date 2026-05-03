@@ -18,9 +18,11 @@ The matrix covers:
 - `JSONCodec Encode` / `Decode` — wire-format encoding cost across
   `messageSize ∈ {64 B, 1 KiB, 16 KiB}`. Shared by every wspulse SDK that
   speaks the JSON protocol; allocation count especially matters.
-- `Message struct alloc` — bare struct construction + payload assignment.
-  Watchdog bench: should report 0 allocs (Go escape analysis keeps the value
-  on the stack); a regression to non-zero is a red flag.
+- `Message struct alloc` — bare struct construction + payload assignment
+  written into a package-level sink (so the compiler cannot elide the loop).
+  Watchdog bench: should report 0 allocs (the sink is a fixed slot, not a
+  per-iteration allocation, and the payload is just a slice-header copy);
+  a regression to non-zero is a red flag.
 - `Router Dispatch` — event routing cost across `routes ∈ {1, 10, 100}`
   (number of registered events, each with one terminal handler) and
   `middleware ∈ {0, 3}` (global middleware depth prepended to every chain).
