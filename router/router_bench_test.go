@@ -44,8 +44,10 @@ func jsonPayload(size int) []byte {
 //
 // The bench dispatches the middle-indexed event each iteration to keep
 // map-bucket access pattern stable across runs. A warmup Dispatch is
-// issued before ResetTimer so the one-time lazy chain build and first
-// sync.Pool allocation are not charged to the first iteration.
+// issued before the b.Loop loop so the one-time lazy chain build and
+// first sync.Pool allocation are not charged to the first timed
+// iteration (b.Loop's implicit timer reset happens on its first call,
+// after the warmup has already run).
 func BenchmarkRouterDispatch(b *testing.B) {
 	middleware := func(c *router.Context) { c.Next() }
 	terminal := func(*router.Context) {}
