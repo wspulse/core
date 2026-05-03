@@ -38,12 +38,17 @@ func jsonPayload(size int) []byte {
 //     Tests per-handler chain execution cost. Total chain length per
 //     Dispatch is middleware + 1.
 //
+// Middleware handlers call `c.Next()` (matching the existing
+// `BenchmarkDispatch` in router_test.go) so the bench measures the real
+// recursive chain-traversal cost; the terminal handler is a no-op.
+//
 // The bench dispatches the middle-indexed event each iteration to keep
 // map-bucket access pattern stable across runs. A warmup Dispatch is
 // issued before ResetTimer so the one-time lazy chain build and first
 // sync.Pool allocation are not charged to the first iteration.
 func BenchmarkRouterDispatch(b *testing.B) {
-	noop := func(*router.Context) {}
+	middleware := func(c *router.Context) { c.Next() }
+	terminal := func(*router.Context) {}
 
 	for _, routeCount := range []int{1, 10, 100} {
 		for _, mwDepth := range []int{0, 3} {
@@ -51,14 +56,14 @@ func BenchmarkRouterDispatch(b *testing.B) {
 			b.Run(name, func(b *testing.B) {
 				r := router.New()
 				for i := 0; i < mwDepth; i++ {
-					r.Use(noop)
+					r.Use(middleware)
 				}
 
 				events := make([]string, routeCount)
 				for i := 0; i < routeCount; i++ {
 					ev := fmt.Sprintf("event%d", i)
 					events[i] = ev
-					r.On(ev, noop)
+					r.On(ev, terminal)
 				}
 
 				conn := benchConn{}
