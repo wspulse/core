@@ -2,6 +2,15 @@
 
 ## [Unreleased]
 
+## [0.6.1] - 2026-05-18
+
+### Added
+
+- Benchmark harness with `make bench-ci`, `make bench-sync`, and a CI
+  workflow that uploads `bench.txt` as an artefact on every code PR
+  (the workflow ignores Markdown / LICENSE / `.github/instructions/**`
+  changes). See `doc/bench.md` for the baseline numbers. (#40)
+
 ## [0.6.0] - 2026-04-19
 
 ### Changed
@@ -72,7 +81,8 @@
 - `TextMessage` (1) and `BinaryMessage` (2) untyped int constants for WebSocket frame types
 - `ErrConnectionClosed` and `ErrSendBufferFull` sentinel errors
 
-[Unreleased]: https://github.com/wspulse/core/compare/v0.6.0...HEAD
+[Unreleased]: https://github.com/wspulse/core/compare/v0.6.1...HEAD
+[0.6.1]: https://github.com/wspulse/core/compare/v0.6.0...v0.6.1
 [0.6.0]: https://github.com/wspulse/core/compare/v0.5.0...v0.6.0
 [0.5.0]: https://github.com/wspulse/core/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/wspulse/core/compare/v0.3.1...v0.4.0
