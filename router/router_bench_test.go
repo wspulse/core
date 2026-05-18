@@ -9,17 +9,6 @@ import (
 	"github.com/wspulse/core/router"
 )
 
-// benchConn is a noop Connection implementation used by the dispatch bench.
-// The router does not call any of these methods during a normal Dispatch
-// (handlers may, but the bench handlers do not).
-type benchConn struct{}
-
-func (benchConn) ID() string                   { return "bench-conn" }
-func (benchConn) RoomID() string               { return "bench-room" }
-func (benchConn) Send(_ wspulse.Message) error { return nil }
-func (benchConn) Close() error                 { return nil }
-func (benchConn) Done() <-chan struct{}        { return nil }
-
 // jsonPayload returns a valid JSON string payload of total byte length size.
 func jsonPayload(size int) []byte {
 	if size < 2 {
@@ -68,7 +57,7 @@ func BenchmarkRouterDispatch(b *testing.B) {
 					r.On(ev, terminal)
 				}
 
-				conn := benchConn{}
+				conn := newMockConnection("bench-conn", "bench-room")
 				msg := wspulse.Message{
 					Event:   events[routeCount/2],
 					Payload: jsonPayload(64),
